@@ -15,8 +15,8 @@ class StockDataProvider(ABC):
     """股票数据提供者抽象基类，定义统一接口"""
 
     @abstractmethod
-    def get_price_data(self, symbol: str, start_date: Optional[datetime] = None,
-                       end_date: Optional[datetime] = None) -> Dict[str, Any]:
+    def get_price_data(self, symbol: str, start_date: Optional[str] = None,
+                       end_date: Optional[str] = None) -> Dict[str, Any]:
         """获取股票价格数据的抽象方法"""
         pass
 
@@ -41,12 +41,12 @@ class AkshareProvider(StockDataProvider):
         symbol = symbol.replace('sh', '').replace('sz', '').strip()
         return symbol
 
-    def get_price_data(self, symbol: str, start_date: Optional[datetime] = None,
-                       end_date: Optional[datetime] = None) -> Dict[str, Any]:
+    def get_price_data(self, symbol: str, start_date: Optional[str] = None,
+                       end_date: Optional[str] = None) -> Dict[str, Any]:
         """获取A股股票的价格数据
         :param symbol: 股票代码
-        :param start_date: 开始日期
-        :param end_date: 结束日期
+        :param start_date: 开始日期，格式为 'yyyy-mm-dd'
+        :param end_date: 结束日期，格式为 'yyyy-mm-dd'
         :return: 股票价格数据
         """
         try:
@@ -55,26 +55,26 @@ class AkshareProvider(StockDataProvider):
 
             # 设置默认日期范围
             if not start_date:
-                start_date = datetime.now() - timedelta(days=30)
+                start_date_obj = datetime.now() - timedelta(days=30)
+                start_date = start_date_obj.strftime('%Y-%m-%d')
+            else:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+
             if not end_date:
-                end_date = datetime.now()
+                end_date_obj = datetime.now()
+                end_date = end_date_obj.strftime('%Y-%m-%d')
+            else:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
 
             # 使用akshare获取股票数据
             df = ak.stock_zh_a_hist(symbol=formatted_symbol,
-                                    start_date=start_date.strftime('%Y%m%d'),
-                                    end_date=end_date.strftime('%Y%m%d'),
+                                    start_date=start_date_obj.strftime(
+                                        '%Y%m%d'),
+                                    end_date=end_date_obj.strftime('%Y%m%d'),
                                     adjust='qfq')
 
-            # 转换数据格式
-            price_data = {
-                'symbol': formatted_symbol,
-                'prices': df.to_dict('records'),
-                'start_date': start_date.strftime('%Y-%m-%d'),
-                'end_date': end_date.strftime('%Y-%m-%d')
-            }
-
             self.logger.info(f'成功获取股票 {formatted_symbol} 的价格数据')
-            return price_data
+            return df
 
         except Exception as e:
             self.logger.error(f'获取股票 {symbol} 价格数据时发生错误: {str(e)}')
