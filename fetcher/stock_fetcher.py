@@ -5,7 +5,7 @@ import logging
 import akshare as ak
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
-from .base import Stock
+# from .base import Stock
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
