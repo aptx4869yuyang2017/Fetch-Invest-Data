@@ -6,7 +6,8 @@ import akshare as ak
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,11 @@ class StockDataProvider(ABC):
     @abstractmethod
     def get_company_info(self, symbol: str) -> Dict[str, Any]:
         """获取公司信息的抽象方法"""
+        pass
+
+    @abstractmethod
+    def get_all_stock_codes(self) -> List[str]:
+        """获取所有股票代码的抽象方法"""
         pass
 
 
@@ -112,10 +118,9 @@ class AkshareProvider(StockDataProvider):
             df_none['adjust_type'] = 'none'  # 添加复权类型标识
 
             # 合并所有数据
-            import pandas as pd
             result_df = pd.concat([df_qfq, df_hfq, df_none], ignore_index=True)
 
-            self.logger.info(f'成功获取股票 {formatted_symbol} 的三种复权类型价格数据')
+            # self.logger.info(f'成功获取股票 {formatted_symbol} 的三种复权类型价格数据')
             return result_df
 
         except Exception as e:
@@ -179,6 +184,23 @@ class AkshareProvider(StockDataProvider):
             self.logger.error(f'获取股票 {symbol} 公司信息时发生错误: {str(e)}')
             raise
 
+    def get_all_stock_codes(self) -> List[str]:
+        """获取所有A股股票代码
+        :return: 股票代码列表
+        """
+        try:
+            # 使用 akshare 获取所有A股列表
+            stock_info_df = ak.stock_info_a_code_name()
+            # 提取股票代码列表
+            stock_codes = stock_info_df['code'].tolist()
+
+            self.logger.info(f'成功获取所有A股股票代码，共 {len(stock_codes)} 个')
+            return stock_codes
+
+        except Exception as e:
+            self.logger.error(f'获取股票代码列表时发生错误: {str(e)}')
+            raise
+
 
 # 可以添加其他数据提供者实现，例如：
 # class TushareProvider(StockDataProvider):
@@ -240,21 +262,47 @@ class StockPriceFetcher:
         """
         return self.provider.get_company_info(symbol)
 
-    def fetch_multiple_stocks(self, symbols: List[str]) -> Dict[str, Any]:
+    def fetch_multiple_stocks(self, symbols: List[str],
+                              start_date: Optional[datetime] = None,
+                              end_date: Optional[datetime] = None,
+                              max_workers: int = 20) -> Dict[str, Any]:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
+        :param start_date: 开始日期
+        :param end_date: 结束日期
+        :param max_workers: 最大线程数，默认为20
         :return: 合并后的所有股票数据 DataFrame
         """
-        results = []
-        for symbol in symbols:
+
+        def fetch_single_stock(symbol):
             try:
-                data = self.fetch_stock_price(symbol)
-                results.append(data)
+                return self.fetch_stock_price(symbol, start_date, end_date)
             except Exception as e:
                 self.logger.error(f'获取股票 {symbol} 数据失败: {str(e)}')
-                continue
+                return None
+
+        results = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # 提交所有任务
+            future_to_symbol = {executor.submit(fetch_single_stock, symbol): symbol
+                                for symbol in symbols}
+
+            # 使用tqdm创建进度条
+            with tqdm(total=len(symbols), desc="获取股票数据") as pbar:
+                # 获取完成的任务结果
+                for future in as_completed(future_to_symbol):
+                    result = future.result()
+                    if result is not None:
+                        results.append(result)
+                    pbar.update(1)
 
         # 合并所有股票数据
         if results:
             return pd.concat(results, ignore_index=True)
         return pd.DataFrame()  # 如果没有成功获取任何数据，返回空DataFrame
+
+    def get_all_stock_codes(self) -> List[str]:
+        """获取所有股票代码
+        :return: 股票代码列表
+        """
+        return self.provider.get_all_stock_codes()

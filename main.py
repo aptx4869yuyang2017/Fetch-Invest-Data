@@ -47,8 +47,9 @@ def main():
         # TODO: 在这里添加数据抓取、清洗和存储的主要逻辑
 
         fetcher = StockPriceFetcher('akshare')
-        res = fetcher.fetch_multiple_stocks(['603777', '000001'])
-        # res = fetcher.fetch_company_info('603777')
+        stock_list = fetcher.get_all_stock_codes()
+        res = fetcher.fetch_multiple_stocks(
+            stock_list[:100], '2000-01-01', '2025-03-05')
         print(res)
 
         # 初始化文件存储并保存数据
