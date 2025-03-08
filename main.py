@@ -4,7 +4,7 @@
 import logging
 import configparser
 from pathlib import Path
-from fetcher.stock_fetcher import StockDataProvider, AkshareProvider, StockFetcher
+from fetcher.stock_fetcher import AkshareProvider, StockFetcher
 from storage.file_storage import FileStorage
 
 # 设置日志配置
@@ -45,13 +45,15 @@ def main():
         logger.info('应用启动成功')
 
         # TODO: 在这里添加数据抓取、清洗和存储的主要逻辑
-        provider = AkshareProvider()
-        res = provider.get_price_data('000001', '2025-01-01', '2025-01-31')
+
+        fetcher = StockFetcher('akshare')
+        res = fetcher.fetch_stock_price('603777')
+        # res = fetcher.fetch_company_info('603777')
         print(res)
 
         # 初始化文件存储并保存数据
         storage = FileStorage()
-        storage.save_to_csv(res, '000001_price_data')
+        storage.save_to_csv(res, 'info')
         logger.info('股票数据已成功保存到CSV文件')
 
     except Exception as e:
