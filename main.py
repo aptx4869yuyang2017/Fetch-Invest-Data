@@ -6,6 +6,7 @@ import configparser
 from pathlib import Path
 from fetcher.stock_price_fetcher import AkshareProvider, StockPriceFetcher
 from storage.file_storage import FileStorage
+from storage.db_storage import DBStorage
 
 # 设置日志配置
 
@@ -50,12 +51,11 @@ def main():
         stock_list = fetcher.get_all_stock_codes()
         res = fetcher.fetch_multiple_stocks(
             stock_list[:100], '2000-01-01', '2025-03-05')
-        print(res)
 
         # 初始化文件存储并保存数据
-        storage = FileStorage()
-        storage.save_to_csv(res, 'info')
-        logger.info('股票数据已成功保存到CSV文件')
+        storage = DBStorage()
+        storage.save_df(res, 'stock_prices', if_exists='replace')
+        logger.info('股票数据已成功保存到数据库中')
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')
