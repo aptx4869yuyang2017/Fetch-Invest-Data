@@ -5,8 +5,9 @@ import logging
 import akshare as ak
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta
-# from .base import Stock
 from abc import ABC, abstractmethod
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -239,10 +240,10 @@ class StockPriceFetcher:
         """
         return self.provider.get_company_info(symbol)
 
-    def fetch_multiple_stocks(self, symbols: List[str]) -> List[Dict[str, Any]]:
+    def fetch_multiple_stocks(self, symbols: List[str]) -> Dict[str, Any]:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
-        :return: 多个股票的数据列表
+        :return: 合并后的所有股票数据 DataFrame
         """
         results = []
         for symbol in symbols:
@@ -252,4 +253,8 @@ class StockPriceFetcher:
             except Exception as e:
                 self.logger.error(f'获取股票 {symbol} 数据失败: {str(e)}')
                 continue
-        return results
+
+        # 合并所有股票数据
+        if results:
+            return pd.concat(results, ignore_index=True)
+        return pd.DataFrame()  # 如果没有成功获取任何数据，返回空DataFrame
