@@ -9,6 +9,7 @@ from typing import Dict, Any, Union
 
 logger = logging.getLogger(__name__)
 
+
 class FileStorage:
     def __init__(self, base_dir: str = 'data'):
         self.logger = logging.getLogger(__name__)
@@ -26,10 +27,10 @@ class FileStorage:
             file_path = self.base_dir / f'{filename}.json'
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            
+
             self.logger.info(f'数据已成功保存到 {file_path}')
             return True
-            
+
         except Exception as e:
             self.logger.error(f'保存JSON文件时发生错误: {str(e)}')
             return False
@@ -43,7 +44,7 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.csv'
-            
+
             # 如果输入是字典，先转换为DataFrame
             if isinstance(data, dict):
                 if 'prices' in data:
@@ -52,11 +53,11 @@ class FileStorage:
                     df = pd.DataFrame([data])
             else:
                 df = data
-            
-            df.to_csv(file_path, index=False, encoding='utf-8')
+
+            df.to_csv(file_path, index=False, encoding='utf-8-sig')
             self.logger.info(f'数据已成功保存到 {file_path}')
             return True
-            
+
         except Exception as e:
             self.logger.error(f'保存CSV文件时发生错误: {str(e)}')
             return False
@@ -71,10 +72,10 @@ class FileStorage:
             file_path = self.base_dir / f'{filename}.json'
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             self.logger.info(f'成功从 {file_path} 加载数据')
             return data
-            
+
         except Exception as e:
             self.logger.error(f'加载JSON文件时发生错误: {str(e)}')
             raise
@@ -88,10 +89,10 @@ class FileStorage:
         try:
             file_path = self.base_dir / f'{filename}.csv'
             df = pd.read_csv(file_path)
-            
+
             self.logger.info(f'成功从 {file_path} 加载数据')
             return df
-            
+
         except Exception as e:
             self.logger.error(f'加载CSV文件时发生错误: {str(e)}')
             raise
