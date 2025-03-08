@@ -4,8 +4,9 @@
 import unittest
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
-from fetcher.stock_fetcher import StockDataProvider, AkshareProvider, StockFetcher
+from fetcher.stock_price_fetcher import StockDataProvider, AkshareProvider, StockPriceFetcher
 import pandas as pd
+
 
 class TestStockDataProvider(unittest.TestCase):
     """测试StockDataProvider抽象类的实现"""
@@ -14,6 +15,7 @@ class TestStockDataProvider(unittest.TestCase):
         """测试抽象方法是否被正确定义"""
         with self.assertRaises(TypeError):
             StockDataProvider()
+
 
 class TestAkshareProvider(unittest.TestCase):
     """测试AkshareProvider类的功能"""
@@ -68,16 +70,17 @@ class TestAkshareProvider(unittest.TestCase):
         self.assertEqual(result['symbol'], '600000')
         self.assertIn('info', result)
 
+
 class TestStockFetcher(unittest.TestCase):
     """测试StockFetcher类的功能"""
 
     def setUp(self):
         self.mock_provider = Mock(spec=StockDataProvider)
-        self.fetcher = StockFetcher(provider=self.mock_provider)
+        self.fetcher = StockPriceFetcher(provider=self.mock_provider)
 
     def test_init_default_provider(self):
         """测试默认提供者初始化"""
-        fetcher = StockFetcher()
+        fetcher = StockPriceFetcher()
         self.assertIsInstance(fetcher.provider, AkshareProvider)
 
     def test_set_provider(self):
@@ -117,10 +120,12 @@ class TestStockFetcher(unittest.TestCase):
     def test_fetch_multiple_stocks_with_error(self):
         """测试批量获取时的错误处理"""
         test_symbols = ['600000', '600001']
-        self.mock_provider.get_price_data.side_effect = [Exception('测试错误'), {'symbol': '600001', 'prices': []}]
+        self.mock_provider.get_price_data.side_effect = [
+            Exception('测试错误'), {'symbol': '600001', 'prices': []}]
 
         results = self.fetcher.fetch_multiple_stocks(test_symbols)
         self.assertEqual(len(results), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -185,7 +185,7 @@ class AkshareProvider(StockDataProvider):
 #     ...
 
 
-class StockFetcher:
+class StockPriceFetcher:
     """股票数据获取器，用于批量获取股票数据"""
 
     def __init__(self, provider: Optional[Union[StockDataProvider, str]] = None):

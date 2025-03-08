@@ -4,7 +4,7 @@
 import logging
 import configparser
 from pathlib import Path
-from fetcher.stock_fetcher import AkshareProvider, StockFetcher
+from fetcher.stock_price_fetcher import AkshareProvider, StockPriceFetcher
 from storage.file_storage import FileStorage
 
 # 设置日志配置
@@ -46,7 +46,7 @@ def main():
 
         # TODO: 在这里添加数据抓取、清洗和存储的主要逻辑
 
-        fetcher = StockFetcher('akshare')
+        fetcher = StockPriceFetcher('akshare')
         res = fetcher.fetch_stock_price('603777')
         # res = fetcher.fetch_company_info('603777')
         print(res)
