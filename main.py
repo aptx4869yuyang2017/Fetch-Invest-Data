@@ -50,11 +50,16 @@ def main():
         fetcher = StockPriceFetcher('akshare')
         stock_list = fetcher.get_all_stock_codes()
         res = fetcher.fetch_multiple_stocks(
-            stock_list[:100], '2000-01-01', '2025-03-05')
+            stock_list, '2000-01-01', '2009-12-31', 10)
 
         # 初始化文件存储并保存数据
-        storage = DBStorage()
-        storage.save_df(res, 'stock_prices', if_exists='replace')
+        storage = FileStorage()
+        storage.save_to_csv(res, 'stock_prices')
+        logger.info('股票数据已成功保存到文件中')
+
+        # 初始化文件存储并保存数据
+        db_storage = DBStorage()
+        db_storage.save_df(res, 'stock_prices', if_exists='replace')
         logger.info('股票数据已成功保存到数据库中')
 
     except Exception as e:

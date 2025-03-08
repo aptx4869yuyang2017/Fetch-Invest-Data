@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pandas as pd
+from utils.http_utils import retry_on_http_error
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,20 @@ class AkshareProvider(StockDataProvider):
         # 移除可能的交易所前缀
         symbol = symbol.replace('sh', '').replace('sz', '').strip()
         return symbol
+
+    @retry_on_http_error(max_retries=3, delay=1)
+    def _fetch_stock_data(self, symbol: str, start_date: str, end_date: str, adjust: str) -> pd.DataFrame:
+        """获取股票数据的内部方法，带有重试机制
+        :param symbol: 股票代码
+        :param start_date: 开始日期
+        :param end_date: 结束日期
+        :param adjust: 复权类型
+        :return: 股票数据DataFrame
+        """
+        return ak.stock_zh_a_hist(symbol=symbol,
+                                  start_date=start_date,
+                                  end_date=end_date,
+                                  adjust=adjust)
 
     def get_price_data(self, symbol: str, start_date: Optional[str] = None,
                        end_date: Optional[str] = None) -> Dict[str, Any]:
@@ -94,39 +109,33 @@ class AkshareProvider(StockDataProvider):
             end_date_fmt = end_date_obj.strftime('%Y%m%d')
 
             # 前复权数据
-            df_qfq = ak.stock_zh_a_hist(symbol=formatted_symbol,
-                                        start_date=start_date_fmt,
-                                        end_date=end_date_fmt,
-                                        adjust='qfq')
+            df_qfq = self._fetch_stock_data(
+                formatted_symbol, start_date_fmt, end_date_fmt, 'qfq')
             df_qfq.rename(columns=column_mapping, inplace=True)
             df_qfq['adjust_type'] = 'qfq'  # 添加复权类型标识
 
             # 后复权数据
-            df_hfq = ak.stock_zh_a_hist(symbol=formatted_symbol,
-                                        start_date=start_date_fmt,
-                                        end_date=end_date_fmt,
-                                        adjust='hfq')
+            df_hfq = self._fetch_stock_data(
+                formatted_symbol, start_date_fmt, end_date_fmt, 'hfq')
             df_hfq.rename(columns=column_mapping, inplace=True)
             df_hfq['adjust_type'] = 'hfq'  # 添加复权类型标识
 
             # 不复权数据
-            df_none = ak.stock_zh_a_hist(symbol=formatted_symbol,
-                                         start_date=start_date_fmt,
-                                         end_date=end_date_fmt,
-                                         adjust='')
+            df_none = self._fetch_stock_data(
+                formatted_symbol, start_date_fmt, end_date_fmt, '')
             df_none.rename(columns=column_mapping, inplace=True)
             df_none['adjust_type'] = 'none'  # 添加复权类型标识
 
             # 合并所有数据
             result_df = pd.concat([df_qfq, df_hfq, df_none], ignore_index=True)
 
-            # self.logger.info(f'成功获取股票 {formatted_symbol} 的三种复权类型价格数据')
             return result_df
 
         except Exception as e:
             self.logger.error(f'获取股票 {symbol} 价格数据时发生错误: {str(e)}')
             raise
 
+    @retry_on_http_error(max_retries=3, delay=1)
     def get_company_info(self, symbol: str) -> Dict[str, Any]:
         """获取A股公司基本信息
         :param symbol: 股票代码
@@ -138,9 +147,6 @@ class AkshareProvider(StockDataProvider):
 
             # 获取公司基本信息
             info = ak.stock_individual_info_em(symbol=formatted_symbol)
-
-            # 创建一个新的DataFrame，将信息转换为标准格式
-            import pandas as pd
 
             # 中文列名到英文列名的映射
             column_mapping = {
@@ -184,6 +190,7 @@ class AkshareProvider(StockDataProvider):
             self.logger.error(f'获取股票 {symbol} 公司信息时发生错误: {str(e)}')
             raise
 
+    @retry_on_http_error(max_retries=3, delay=1)
     def get_all_stock_codes(self) -> List[str]:
         """获取所有A股股票代码
         :return: 股票代码列表
@@ -265,12 +272,12 @@ class StockPriceFetcher:
     def fetch_multiple_stocks(self, symbols: List[str],
                               start_date: Optional[datetime] = None,
                               end_date: Optional[datetime] = None,
-                              max_workers: int = 20) -> Dict[str, Any]:
+                              max_workers: int = 10) -> Dict[str, Any]:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
         :param start_date: 开始日期
         :param end_date: 结束日期
-        :param max_workers: 最大线程数，默认为20
+        :param max_workers: 最大线程数，默认为 10
         :return: 合并后的所有股票数据 DataFrame
         """
 
