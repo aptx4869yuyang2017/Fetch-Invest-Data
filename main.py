@@ -47,20 +47,21 @@ def main():
 
         # TODO: 在这里添加数据抓取、清洗和存储的主要逻辑
 
-        fetcher = StockPriceFetcher('akshare')
+        fetcher = StockPriceFetcher('tushare')
         stock_list = fetcher.get_all_stock_codes()
-        res = fetcher.fetch_multiple_stocks(
-            stock_list, '2000-01-01', '2009-12-31', 10)
+        print(stock_list[5])
+        # res = fetcher.fetch_multiple_stocks(
+        #     stock_list[5], '2000-01-01', '2009-12-31', 10)
 
         # 初始化文件存储并保存数据
-        storage = FileStorage()
-        storage.save_to_csv(res, 'stock_prices')
-        logger.info('股票数据已成功保存到文件中')
+        # storage = FileStorage()
+        # storage.save_to_csv(res, 'stock_prices')
+        # logger.info('股票数据已成功保存到文件中')
 
         # 初始化文件存储并保存数据
-        db_storage = DBStorage()
-        db_storage.save_df(res, 'stock_prices', if_exists='replace')
-        logger.info('股票数据已成功保存到数据库中')
+        # db_storage = DBStorage()
+        # db_storage.save_df(res, 'stock_prices', if_exists='replace')
+        # logger.info('股票数据已成功保存到数据库中')
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')

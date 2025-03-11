@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 from utils.http_utils import retry_on_http_error
 from .stock_data_provider import StockDataProvider
+import os
+from utils.cache_utils import FileCache
 
 
 class TushareProvider(StockDataProvider):
@@ -20,6 +22,10 @@ class TushareProvider(StockDataProvider):
         self.logger = logging.getLogger(__name__)
         ts.set_token(token)
         self.pro = ts.pro_api()
+        
+        # 初始化文件缓存
+        cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cache', 'tushare')
+        self.cache = FileCache(cache_dir)
 
     def _format_symbol(self, symbol: str) -> str:
         """格式化股票代码
@@ -143,11 +149,21 @@ class TushareProvider(StockDataProvider):
         """获取所有A股股票代码
         :return: 股票代码列表
         """
+        # 尝试从缓存获取数据
+        cache_key = 'all_stock_codes'
+        cached_data = self.cache.get(cache_key)
+        if cached_data is not None:
+            self.logger.debug('使用缓存的股票代码列表')
+            return cached_data
+
         try:
             # 获取所有上市公司基本信息
             data = self.pro.stock_basic(exchange='', list_status='L')
             # 提取股票代码列表
             stock_codes = data['symbol'].tolist()
+
+            # 更新缓存（设置24小时过期）
+            self.cache.set(cache_key, stock_codes, ttl=86400)
 
             self.logger.info(f'成功获取所有A股股票代码，共 {len(stock_codes)} 个')
             return stock_codes
