@@ -72,7 +72,7 @@ class AkshareProvider(StockDataProvider):
 
             # 列名映射字典
             column_mapping = {
-                '日期': 'date',
+                '日期': 'dt',
                 '股票代码': 'symbol',
                 '开盘': 'open',
                 '收盘': 'close',
