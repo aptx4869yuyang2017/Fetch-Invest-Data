@@ -85,10 +85,10 @@ class AkshareProvider(StockDataProvider):
             end_date_fmt = end_date_obj.strftime('%Y%m%d')
 
             # 前复权数据
-            df_qfq = self._fetch_stock_data(
-                formatted_symbol, start_date_fmt, end_date_fmt, 'qfq')
-            df_qfq.rename(columns=column_mapping, inplace=True)
-            df_qfq['adjust_type'] = 'qfq'  # 添加复权类型标识
+            # df_qfq = self._fetch_stock_data(
+            #     formatted_symbol, start_date_fmt, end_date_fmt, 'qfq')
+            # df_qfq.rename(columns=column_mapping, inplace=True)
+            # df_qfq['adjust_type'] = 'qfq'  # 添加复权类型标识
 
             # 后复权数据
             df_hfq = self._fetch_stock_data(
@@ -103,7 +103,7 @@ class AkshareProvider(StockDataProvider):
             df_none['adjust_type'] = 'none'  # 添加复权类型标识
 
             # 合并所有数据
-            result_df = pd.concat([df_qfq, df_hfq, df_none], ignore_index=True)
+            result_df = pd.concat([df_hfq, df_none], ignore_index=True)
 
             return result_df
 
