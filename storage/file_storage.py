@@ -25,6 +25,7 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.json'
+            self.logger.info(f'开始保存 {file_path}')
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -44,7 +45,7 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.csv'
-
+            self.logger.info(f'开始保存 {file_path}')
             # 如果输入是字典，先转换为DataFrame
             if isinstance(data, dict):
                 if 'prices' in data:
@@ -62,6 +63,33 @@ class FileStorage:
             self.logger.error(f'保存CSV文件时发生错误: {str(e)}')
             return False
 
+    def save_to_parquet(self, data: Union[Dict[str, Any], pd.DataFrame], filename: str) -> bool:
+        """
+        将数据保存为Parquet文件
+        :param data: 要保存的数据（字典或DataFrame）
+        :param filename: 文件名
+        :return: 保存是否成功
+        """
+        try:
+            file_path = self.base_dir / f'{filename}.parquet'
+            self.logger.info(f'开始保存 {file_path}')
+            # 如果输入是字典，先转换为DataFrame
+            if isinstance(data, dict):
+                if 'prices' in data:
+                    df = pd.DataFrame(data['prices'])
+                else:
+                    df = pd.DataFrame([data])
+            else:
+                df = data
+
+            df.to_parquet(file_path, index=False)
+            self.logger.info(f'数据已成功保存到 {file_path}')
+            return True
+
+        except Exception as e:
+            self.logger.error(f'保存Parquet文件时发生错误: {str(e)}')
+            return False
+
     def load_from_json(self, filename: str) -> Dict[str, Any]:
         """
         从JSON文件加载数据
@@ -70,6 +98,7 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.json'
+            self.logger.info(f'开始加载 {file_path}')
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
@@ -88,6 +117,7 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.csv'
+            self.logger.info(f'开始加载 {file_path}')
             df = pd.read_csv(file_path)
 
             self.logger.info(f'成功从 {file_path} 加载数据')
@@ -95,4 +125,22 @@ class FileStorage:
 
         except Exception as e:
             self.logger.error(f'加载CSV文件时发生错误: {str(e)}')
+            raise
+
+    def load_from_parquet(self, filename: str) -> pd.DataFrame:
+        """
+        从Parquet文件加载数据
+        :param filename: 文件名
+        :return: 加载的数据DataFrame
+        """
+        try:
+            file_path = self.base_dir / f'{filename}.parquet'
+            self.logger.info(f'开始加载 {file_path}')
+            df = pd.read_parquet(file_path)
+
+            self.logger.info(f'成功从 {file_path} 加载数据')
+            return df
+
+        except Exception as e:
+            self.logger.error(f'加载Parquet文件时发生错误: {str(e)}')
             raise
