@@ -30,9 +30,6 @@ class TestAkshareProvider(unittest.TestCase):
         result = self.provider.get_price_data(
             self.test_symbol, self.start_date, self.end_date)
 
-        print("获取到的数据:")
-        print(result)
-
         # 测试1: 检查返回的列是否符合预期
         print("实际返回的列:", result.columns.tolist())
         expected_columns = {'symbol', 'dt', 'open', 'close', 'high', 'low',
