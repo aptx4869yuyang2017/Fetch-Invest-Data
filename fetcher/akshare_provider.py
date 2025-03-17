@@ -51,7 +51,7 @@ class AkshareProvider(StockDataProvider):
         :param symbol: 股票代码
         :param start_date: 开始日期，格式为 'yyyy-mm-dd'
         :param end_date: 结束日期，格式为 'yyyy-mm-dd'
-        :return: 包含三种复权类型数据的DataFrame，列名为英文
+        :return: 包含2种复权类型数据的DataFrame，列名为英文
         """
         try:
             # 格式化股票代码
