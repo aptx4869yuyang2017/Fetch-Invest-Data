@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from fetcher.akshare_provider import AkshareProvider
+from fetcher.stock_price_provider_akshare import StockPriceProviderAkshare
 import unittest
 import pandas as pd
 from datetime import datetime, timedelta
@@ -18,7 +18,7 @@ class TestAkshareProvider(unittest.TestCase):
 
     def setUp(self):
         """测试前的准备工作"""
-        self.provider = AkshareProvider()
+        self.provider = StockPriceProviderAkshare()
         # 设置测试使用的股票代码和日期范围
         self.test_symbol = '000001'  # 平安银行
         self.start_date = '2023-01-09'

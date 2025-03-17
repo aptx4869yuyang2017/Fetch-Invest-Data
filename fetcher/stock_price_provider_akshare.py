@@ -9,10 +9,10 @@ import pandas as pd
 import os
 from utils.http_utils import retry_on_http_error
 from utils.cache_utils import FileCache
-from .stock_data_provider import StockDataProvider
+from .stock_price_provider import StockDataProvider
 
 
-class AkshareProvider(StockDataProvider):
+class StockPriceProviderAkshare(StockDataProvider):
     """Akshare数据提供者实现"""
 
     def __init__(self):

@@ -7,9 +7,9 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pandas as pd
-from .stock_data_provider import StockDataProvider
-from .akshare_provider import AkshareProvider
-from .tushare_provider import TushareProvider
+from .stock_price_provider import StockDataProvider
+from .stock_price_provider_akshare import StockPriceProviderAkshare
+from .stock_price_provider_tushare import StockPriceProviderTushare
 import os
 from dotenv import load_dotenv
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # 加载环境变量
 load_dotenv()
 
+
 class StockPriceFetcher:
     """股票数据获取器，用于批量获取股票数据"""
 
@@ -33,7 +34,7 @@ class StockPriceFetcher:
         """
         self.logger = logging.getLogger(__name__)
         self.available_providers = {
-            'akshare': AkshareProvider,
+            'akshare': StockPriceProviderAkshare,
             'tushare': lambda: TushareProvider(token=os.getenv('TUSHARE_TOKEN')),
         }
 

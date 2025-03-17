@@ -7,12 +7,12 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import pandas as pd
 from utils.http_utils import retry_on_http_error
-from .stock_data_provider import StockDataProvider
+from .stock_price_provider import StockDataProvider
 import os
 from utils.cache_utils import FileCache
 
 
-class TushareProvider(StockDataProvider):
+class StockPriceProviderTushare(StockDataProvider):
     """Tushare数据提供者实现"""
 
     def __init__(self, token: str):
@@ -22,9 +22,10 @@ class TushareProvider(StockDataProvider):
         self.logger = logging.getLogger(__name__)
         ts.set_token(token)
         self.pro = ts.pro_api()
-        
+
         # 初始化文件缓存
-        cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'cache', 'tushare')
+        cache_dir = os.path.join(os.path.dirname(
+            os.path.dirname(__file__)), 'cache', 'tushare')
         self.cache = FileCache(cache_dir)
 
     def _format_symbol(self, symbol: str) -> str:
@@ -46,7 +47,8 @@ class TushareProvider(StockDataProvider):
         :param end_date: 结束日期
         :return: 股票数据DataFrame
         """
-        df = self.pro.daily(ts_code=symbol, start_date=start_date, end_date=end_date)
+        df = self.pro.daily(
+            ts_code=symbol, start_date=start_date, end_date=end_date)
         return df
 
     def get_price_data(self, symbol: str, start_date: Optional[str] = None,
@@ -90,7 +92,7 @@ class TushareProvider(StockDataProvider):
                 'pct_chg': 'change_percent',
                 'turnover_rate': 'turnover_rate'
             }
-            
+
             df.rename(columns=column_mapping, inplace=True)
             df['adjust_type'] = 'none'  # Tushare 的基础数据是不复权数据
 
@@ -112,10 +114,10 @@ class TushareProvider(StockDataProvider):
         """
         try:
             formatted_symbol = self._format_symbol(symbol)
-            
+
             # 获取公司基本信息
             info = self.pro.stock_company(ts_code=formatted_symbol)
-            
+
             if info.empty:
                 raise ValueError(f"未找到股票 {symbol} 的公司信息")
 
@@ -130,10 +132,10 @@ class TushareProvider(StockDataProvider):
             }
 
             info.rename(columns=column_mapping, inplace=True)
-            
+
             # 添加symbol字段
             info['symbol'] = symbol
-            
+
             # 添加更新时间
             info['update_date'] = datetime.now().strftime('%Y-%m-%d')
 
