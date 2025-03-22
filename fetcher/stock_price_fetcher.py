@@ -78,10 +78,10 @@ class StockPriceFetcher:
         """
         return self.provider.get_company_info(symbol)
 
-    def fetch_multiple_stocks(self, symbols: List[str],
-                              start_date: Optional[datetime] = None,
-                              end_date: Optional[datetime] = None,
-                              max_workers: int = 10) -> Dict[str, Any]:
+    def fetch_multiple_stock_price(self, symbols: List[str],
+                                   start_date: Optional[datetime] = None,
+                                   end_date: Optional[datetime] = None,
+                                   max_workers: int = 10) -> Dict[str, Any]:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
         :param start_date: 开始日期
