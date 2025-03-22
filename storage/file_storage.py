@@ -52,7 +52,6 @@ class FileStorage:
         """
         try:
             file_path = self.base_dir / f'{filename}.csv'
-            print('self.base_dir', self.base_dir)
             self.logger.info(f'开始保存 {file_path}')
             # 如果输入是字典，先转换为DataFrame
             if isinstance(data, dict):
