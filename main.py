@@ -6,19 +6,23 @@ import configparser
 import unittest
 import subprocess
 from pathlib import Path
-from fetcher.stock_price_fetcher import AkshareProvider, StockPriceFetcher
+from fetcher.stock_price_fetcher import StockPriceFetcher
 from storage.file_storage import FileStorage
 from storage.db_storage import DBStorage
+from fetcher.financial_report_fetcher import FinancialReportFetcher
+from fetcher.financial_report_provider_akshare import FinancialReportProviderAkshare
+from fetcher.etf_price_fetcher import ETFPriceFetcher
 
-# 设置日志配置
 
-
-def setup_logging():
+def setup_logging(level_str='INFO'):
     log_dir = Path('logs')
     log_dir.mkdir(exist_ok=True)
 
+    # 将字符串日志级别转换为logging模块的级别常量
+    level = getattr(logging, level_str.upper(), logging.INFO)
+
     logging.basicConfig(
-        level=logging.INFO,
+        level=level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler('logs/app.log'),
@@ -57,9 +61,57 @@ def run_tests():
         return False
 
 
+def fetch_stock_price():
+    fetcher = StockPriceFetcher('akshare')
+    stock_list = fetcher.get_all_stock_codes()
+
+    res = fetcher.fetch_multiple_stock_price(
+        stock_list[:10], '2025-01-01', '2025-02-28', 5)
+
+    # 初始化文件存储并保存数据
+    storage = FileStorage()
+    storage.save_to_csv(res, 'stock_prices_test')
+    storage.save_to_parquet(res, 'stock_prices_test')
+    logger.info('股票数据已成功保存到文件中')
+
+
+def fetch_etf_price():
+    logger = logging.getLogger(__name__)
+    etf_fetcher = ETFPriceFetcher('akshare')
+    etf_list = etf_fetcher.get_all_etf_codes()
+
+    # 获取ETF价格数据
+    etf_data = etf_fetcher.fetch_multiple_etf_price(
+        etf_list, '2000-01-01', '2025-02-28')
+
+    # 保存数据
+    storage = FileStorage()
+    storage.save_to_csv(etf_data, 'etf_prices')
+    storage.save_to_parquet(etf_data, 'etf_prices')
+    logger.info('ETF数据已成功保存到文件中')
+
+
+def fetch_financial_report():
+    logger = logging.getLogger(__name__)
+    fetcher = StockPriceFetcher('akshare')
+    stock_list = fetcher.get_all_stock_codes()
+
+    fetcher = FinancialReportFetcher('akshare')
+
+    # 获取财务数据
+    multiple_financial_data = fetcher.fetch_multiple_balance_sheets(
+        symbols=['839729'], max_workers=4)
+    # 保存数据
+    storage = FileStorage()
+    storage.save_to_csv(multiple_financial_data, 'balance_sheets_6000')
+    storage.save_to_parquet(multiple_financial_data, 'balance_sheets_6000')
+
+    logger.info('财务已成功保存到文件中')
+
+
 def main():
     # 设置日志
-    setup_logging()
+    setup_logging('INFO')
     logger = logging.getLogger(__name__)
 
     try:
@@ -68,30 +120,13 @@ def main():
         logger.info('应用启动成功')
 
         # 执行单元测试
-        tests_passed = run_tests()
-        if not tests_passed:
-            logger.warning('单元测试未通过，请检查测试失败的原因')
-            # 可以选择在测试失败时退出程序
-            # return
+        # tests_passed = run_tests()
+        # if not tests_passed:
+        #     logger.warning('单元测试未通过，请检查测试失败的原因')
+        # 可以选择在测试失败时退出程序
+        # return
 
-        # TODO: 在这里添加数据抓取、清洗和存储的主要逻辑
-
-        fetcher = StockPriceFetcher('akshare')
-        stock_list = fetcher.get_all_stock_codes()
-
-        res = fetcher.fetch_multiple_stocks(
-            stock_list[:10], '2000-01-01', '2025-02-28', 5)
-
-        # 初始化文件存储并保存数据
-        # storage = FileStorage()
-        # storage.save_to_csv(res, 'stock_prices_2000-2025')
-        # storage.save_to_parquet(res, 'stock_prices_2000-2025')
-        # logger.info('股票数据已成功保存到文件中')
-
-        # 初始化文件存储并保存数据
-        # db_storage = DBStorage()
-        # db_storage.save_df(res, 'stock_prices', if_exists='append')
-        # logger.info('股票数据已成功保存到数据库中')
+        fetch_financial_report()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')
