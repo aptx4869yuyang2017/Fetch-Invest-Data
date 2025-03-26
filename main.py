@@ -99,12 +99,13 @@ def fetch_financial_report():
     fetcher = FinancialReportFetcher('akshare')
 
     # 获取财务数据
-    multiple_financial_data = fetcher.fetch_multiple_balance_sheets(
-        symbols=stock_list[5200:], max_workers=10)
+
+    multiple_financial_data = fetcher.fetch_multiple_income_statements(
+        symbols=stock_list, max_workers=10)
     # 保存数据
     storage = FileStorage()
-    storage.save_to_csv(multiple_financial_data, 'balance_sheets_6000')
-    storage.save_to_parquet(multiple_financial_data, 'balance_sheets_6000')
+    storage.save_to_csv(multiple_financial_data, 'income_statement')
+    storage.save_to_parquet(multiple_financial_data, 'income_statement')
 
     logger.info('财务已成功保存到文件中')
 
