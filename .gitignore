@@ -23,6 +23,8 @@ env/
 *.csv
 *.parquet
 *.json
+*.xls
+*.xlsx
 
 # 忽略本地配置文件
 .env
