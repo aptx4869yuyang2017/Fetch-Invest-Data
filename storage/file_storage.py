@@ -14,6 +14,8 @@ import tempfile
 import shutil
 import os
 
+pd.set_option('future.no_silent_downcasting', True)
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,13 +92,12 @@ class FileStorage:
                 df = data
 
             # 数据清洗：将空字符串替换为NaN，避免类型转换错误
+            df = df.replace('', np.nan).infer_objects(copy=False)
 
-            if isinstance(df, pd.DataFrame):
-                df = df.replace('', np.nan)
-            elif isinstance(df, dict):
-                for key in df:
-                    if isinstance(df[key], pd.DataFrame):
-                        df[key] = df[key].replace('', np.nan)
+            # 转换时间戳列为兼容类型
+            for col in df.columns:
+                if df[col].dtype == 'datetime64[ns]':
+                    df[col] = df[col].astype('datetime64[us]')
 
             df.to_parquet(file_path, index=False)
             self.logger.info(f'数据已成功保存到 {file_path}')

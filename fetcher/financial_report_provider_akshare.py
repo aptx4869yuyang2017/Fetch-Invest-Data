@@ -52,15 +52,15 @@ class FinancialReportProviderAkshare(FinancialReportProvider):
             # 将日期列转换为 datetime64 类型
             if 'report_date' in df.columns:
                 df['report_date'] = pd.to_datetime(
-                    df['report_date'], errors='coerce').astype('datetime64[ns]')
+                    df['report_date'], errors='coerce').dt.date
 
             if 'notice_date' in df.columns:
                 df['notice_date'] = pd.to_datetime(
-                    df['notice_date'], errors='coerce').astype('datetime64[ns]')
+                    df['notice_date'], errors='coerce').dt.date
 
             if 'update_date' in df.columns:
                 df['update_date'] = pd.to_datetime(
-                    df['update_date'], errors='coerce').astype('datetime64[ns]')
+                    df['update_date'], errors='coerce').dt.date
 
             # 处理可能的NaN值
             df = df.fillna("")
