@@ -100,13 +100,36 @@ def fetch_financial_report():
 
     # 获取财务数据
     multiple_financial_data = fetcher.fetch_multiple_balance_sheets(
-        symbols=['839729'], max_workers=4)
+        symbols=stock_list[5200:], max_workers=10)
     # 保存数据
     storage = FileStorage()
     storage.save_to_csv(multiple_financial_data, 'balance_sheets_6000')
     storage.save_to_parquet(multiple_financial_data, 'balance_sheets_6000')
 
     logger.info('财务已成功保存到文件中')
+
+
+def test_income_statement():
+    logger = logging.getLogger(__name__)
+    logger.info('开始测试利润表获取功能...')
+
+    # 初始化 FinancialReportProviderAkshare
+    provider = FinancialReportProviderAkshare()
+
+    # 测试获取单个股票的利润表
+    test_symbol = '839729'  # 浦发银行
+    income_data = provider.get_income_statement(test_symbol)
+
+    # 保存数据
+    if not income_data.empty:
+        storage = FileStorage()
+        storage.save_to_csv(income_data, f'income_statement_{test_symbol}')
+        storage.save_to_parquet(income_data, f'income_statement_{test_symbol}')
+        logger.info(f'股票 {test_symbol} 的利润表数据已成功保存到文件中')
+        logger.info(f'数据包含 {len(income_data)} 行，{len(income_data.columns)} 列')
+        logger.info(f'数据列: {income_data.columns.tolist()}')
+    else:
+        logger.warning(f'获取股票 {test_symbol} 的利润表数据失败或数据为空')
 
 
 def main():
@@ -127,6 +150,9 @@ def main():
         # return
 
         fetch_financial_report()
+
+        # 测试利润表获取功能
+        # test_income_statement()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')

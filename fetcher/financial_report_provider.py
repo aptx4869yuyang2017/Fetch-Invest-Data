@@ -20,3 +20,15 @@ class FinancialReportProvider(ABC):
             资产负债表数据，DataFrame格式
         """
         pass
+
+    @abstractmethod
+    def get_income_statement(self, symbol: str) -> pd.DataFrame:
+        """获取利润表数据的抽象方法
+
+        Args:
+            symbol: 股票代码
+
+        Returns:
+            利润表数据，DataFrame格式
+        """
+        pass
