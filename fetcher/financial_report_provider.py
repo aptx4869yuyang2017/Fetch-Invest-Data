@@ -32,3 +32,15 @@ class FinancialReportProvider(ABC):
             利润表数据，DataFrame格式
         """
         pass
+
+    @abstractmethod
+    def get_cash_flow_statement(self, symbol: str) -> pd.DataFrame:
+        """获取现金流量表数据的抽象方法
+
+        Args:
+            symbol: 股票代码
+
+        Returns:
+            现金流量表数据，DataFrame格式
+        """
+        pass

@@ -130,3 +130,59 @@ class FinancialReportProviderAkshare(FinancialReportProvider):
                 f"获取股票 {symbol} 的利润表数据失败: {str(e)}", exc_info=True)
             # 返回空DataFrame
             return pd.DataFrame()
+
+    def get_cash_flow_statement(self, symbol: str) -> pd.DataFrame:
+        """获取现金流量表数据
+
+        Args:
+            symbol: 股票代码，格式为 "600000"（不带市场前缀）
+
+        Returns:
+            现金流量表数据DataFrame，包含报告期和各项现金流量表指标
+        """
+        self.logger.debug(f"开始获取股票 {symbol} 的现金流量表数据")
+        try:
+            # 获取完整股票代码
+            full_symbol = get_full_symbol(symbol)
+
+            # 使用AkShare的现金流量表接口
+            df = ak.stock_cash_flow_sheet_by_report_em(symbol=full_symbol)
+
+            # 排除所有包含 YOY 的列（同比增长率指标）
+            df = df.loc[:, ~df.columns.str.contains('YOY', case=False)]
+
+            # 列名映射
+            column_mapping = {
+                'security_code': 'symbol',
+                'secucode': 'symbol_full',
+                'security_name_abbr': 'symbol_name_abbr'
+            }
+
+            # 将列名转换为小写
+            df.columns = df.columns.str.lower()
+            df = df.rename(columns=column_mapping)
+
+            # 将日期列转换为 datetime64 类型
+            if 'report_date' in df.columns:
+                df['report_date'] = pd.to_datetime(
+                    df['report_date'], errors='coerce').dt.date
+
+            if 'notice_date' in df.columns:
+                df['notice_date'] = pd.to_datetime(
+                    df['notice_date'], errors='coerce').dt.date
+
+            if 'update_date' in df.columns:
+                df['update_date'] = pd.to_datetime(
+                    df['update_date'], errors='coerce').dt.date
+
+            # 处理可能的NaN值
+            df = df.fillna("")
+            self.logger.debug(f"成功处理股票 {symbol} 的现金流量表数据，最终数据包含 {len(df)} 行")
+            return df
+
+        except Exception as e:
+            # 异常处理
+            self.logger.error(
+                f"获取股票 {symbol} 的现金流量表数据失败: {str(e)}", exc_info=True)
+            # 返回空DataFrame
+            return pd.DataFrame()
