@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, Optional
 
 from fetcher.financial_report_provider import FinancialReportProvider
-from fetcher.utils import get_full_symbol
+from utils.stock_utils import get_full_symbol
 
 
 class FinancialReportProviderAkshare(FinancialReportProvider):
