@@ -34,8 +34,7 @@ class StockPriceFetcher:
         """
         self.logger = logging.getLogger(__name__)
         self.available_providers = {
-            'akshare': StockPriceProviderAkshare,
-            'tushare': lambda: TushareProvider(token=os.getenv('TUSHARE_TOKEN')),
+            'akshare': StockPriceProviderAkshare
         }
 
         self.set_provider(provider or 'akshare')
@@ -61,12 +60,12 @@ class StockPriceFetcher:
         else:
             raise ValueError("provider 必须是 StockDataProvider 实例或者字符串名称")
 
-    def fetch_stock_price(self, symbol: str, start_date: Optional[datetime] = None,
-                          end_date: Optional[datetime] = None) -> Dict[str, Any]:
+    def fetch_stock_price(self, symbol: str, start_date: Optional[str] = None,
+                          end_date: Optional[str] = None) -> Dict[str, Any]:
         """获取单个股票的价格数据
         :param symbol: 股票代码
-        :param start_date: 开始日期
-        :param end_date: 结束日期
+        :param start_date: 开始日期，格式为 'YYYY-MM-DD'
+        :param end_date: 结束日期，格式为 'YYYY-MM-DD'
         :return: 股票价格数据
         """
         return self.provider.get_price_data(symbol, start_date, end_date)
@@ -79,13 +78,13 @@ class StockPriceFetcher:
         return self.provider.get_company_info(symbol)
 
     def fetch_multiple_stock_price(self, symbols: List[str],
-                                   start_date: Optional[datetime] = None,
-                                   end_date: Optional[datetime] = None,
-                                   max_workers: int = 10) -> Dict[str, Any]:
+                                   start_date: Optional[str] = None,
+                                   end_date: Optional[str] = None,
+                                   max_workers: int = 10) -> pd.DataFrame:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
-        :param start_date: 开始日期
-        :param end_date: 结束日期
+        :param start_date: 开始日期，格式为 'YYYY-MM-DD'
+        :param end_date: 结束日期，格式为 'YYYY-MM-DD'
         :param max_workers: 最大线程数，默认为 10
         :return: 合并后的所有股票数据 DataFrame
         """
