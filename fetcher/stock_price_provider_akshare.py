@@ -46,7 +46,7 @@ class StockPriceProviderAkshare(StockDataProvider):
                                   adjust=adjust)
 
     def get_price_data(self, symbol: str, start_date: Optional[str] = None,
-                       end_date: Optional[str] = None) -> Dict[str, Any]:
+                       end_date: Optional[str] = None) -> pd.DataFrame:
         """获取A股股票的价格数据
         :param symbol: 股票代码
         :param start_date: 开始日期，格式为 'yyyy-mm-dd'
@@ -118,7 +118,7 @@ class StockPriceProviderAkshare(StockDataProvider):
             raise
 
     @retry_on_http_error(max_retries=3, delay=1)
-    def get_company_info(self, symbol: str) -> Dict[str, Any]:
+    def get_company_info(self, symbol: str) -> pd.DataFrame:
         """获取A股公司基本信息
         :param symbol: 股票代码
         :return: 公司基本信息，以DataFrame形式返回，列名为英文
