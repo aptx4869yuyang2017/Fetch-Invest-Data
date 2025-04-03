@@ -74,9 +74,9 @@ class SWIndexFetcher:
 
             # 定义中英文列名映射
             column_mapping = {
-                '行业代码': 'level3_code',           # 行业代码 (object)
-                '行业名称': 'level3_name',           # 行业名称 (object)
-                '上级行业': 'level2_name',
+                '行业代码': 'level_3_code',           # 行业代码 (object)
+                '行业名称': 'level_3_name',           # 行业名称 (object)
+                '上级行业': 'level_2_name',
                 '成份个数': 'stock_count',    # 成份个数 (int64)
                 '静态市盈率': 'pe_ratio',           # 静态市盈率 (float64)
                 'TTM(滚动)市盈率': 'pe_ratio_ttm',  # TTM(滚动)市盈率 (float64)
@@ -123,8 +123,8 @@ class SWIndexFetcher:
 
             # 定义中英文列名映射
             column_mapping = {
-                '行业代码': 'level1_code',           # 行业代码 (object)
-                '行业名称': 'level1_name',           # 行业名称 (object)
+                '行业代码': 'level_1_code',           # 行业代码 (object)
+                '行业名称': 'level_1_name',           # 行业名称 (object)
                 '成份个数': 'stock_count',           # 成份个数 (int64)
                 '静态市盈率': 'pe_ratio',            # 静态市盈率 (float64)
                 'TTM(滚动)市盈率': 'pe_ratio_ttm',   # TTM(滚动)市盈率 (float64)
@@ -177,9 +177,9 @@ class SWIndexFetcher:
 
             # 定义中英文列名映射
             column_mapping = {
-                '行业代码': 'level2_code',           # 行业代码 (object)
-                '行业名称': 'level2_name',           # 行业名称 (object)
-                '上级行业': 'level1_name',           # 上级行业 (object)
+                '行业代码': 'level_2_code',           # 行业代码 (object)
+                '行业名称': 'level_2_name',           # 行业名称 (object)
+                '上级行业': 'level_1_name',           # 上级行业 (object)
                 '成份个数': 'stock_count',           # 成份个数 (int64)
                 '静态市盈率': 'pe_ratio',            # 静态市盈率 (float64)
                 'TTM(滚动)市盈率': 'pe_ratio_ttm',   # TTM(滚动)市盈率 (float64)
@@ -226,8 +226,8 @@ class SWIndexFetcher:
                 '股票代码': 'stock_code',
                 '股票简称': 'stock_name',
                 '纳入时间': 'inclusion_date',
-                '申万3级': 'sw_level_3_name',
-                '申万3级行业代码': 'sw_level_3_code',
+                '申万3级': 'level_3_name',
+                '申万3级行业代码': 'level_3_code',
                 '价格': 'price',
                 '市盈率': 'pe_ratio',
                 '市盈率ttm': 'pe_ratio_ttm',
@@ -249,8 +249,8 @@ class SWIndexFetcher:
                 constituents = constituents.rename(columns=mapping)
 
                 # 如果数据中没有三级行业代码列，则添加该列并填充当前symbol值
-                if 'sw_level_3_code' not in constituents.columns:
-                    constituents['sw_level_3_code'] = symbol
+                if 'level_3_code' not in constituents.columns:
+                    constituents['level_3_code'] = symbol
 
                 # 显式移除申万1级和申万2级列
                 if '申万1级' in constituents.columns:
@@ -258,11 +258,11 @@ class SWIndexFetcher:
                 if '申万2级' in constituents.columns:
                     constituents = constituents.drop(columns=['申万2级'])
 
-                # 将sw_level_3_code放到第一列
+                # 将level_3_code放到第一列
                 cols = constituents.columns.tolist()
-                if 'sw_level_3_code' in cols:
-                    cols.remove('sw_level_3_code')
-                    cols = ['sw_level_3_code'] + cols
+                if 'level_3_code' in cols:
+                    cols.remove('level_3_code')
+                    cols = ['level_3_code'] + cols
                     constituents = constituents[cols]
 
             return constituents
@@ -311,7 +311,7 @@ class SWIndexFetcher:
                         pbar.update(1)
 
             # 统计成功获取的数量
-            success_count = len(set(all_constituents['sw_level_3_code']))
+            success_count = len(set(all_constituents['level_3_code']))
             self.logger.info(f"批量获取完成，成功率: {success_count}/{len(index_codes)}")
             self.logger.info(f"成功获取所有申万三级行业成分股，共 {len(all_constituents)} 条记录")
             return all_constituents
