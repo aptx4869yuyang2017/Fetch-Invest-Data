@@ -264,6 +264,10 @@ class SWIndexFetcher:
                     cols.remove('level_3_code')
                     cols = ['level_3_code'] + cols
                     constituents = constituents[cols]
+                
+                # 添加symbol列，提取stock_code的数值部分
+                if 'stock_code' in constituents.columns:
+                    constituents['symbol'] = constituents['stock_code'].str.extract(r'(\d+)')
 
             return constituents
         except Exception as e:
