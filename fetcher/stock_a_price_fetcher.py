@@ -7,9 +7,10 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import pandas as pd
-from .stock_price_provider import StockDataProvider
-from .stock_price_provider_akshare import StockPriceProviderAkshare
-from .stock_price_provider_tushare import StockPriceProviderTushare
+from .stock_a_price_provider import StockDataProvider
+from .stock_a_price_provider_akshare import StockPriceProviderAkshare
+from .stock_a_price_provider_tushare import StockPriceProviderTushare
+from .stock_a_all_code_fetcher import StockAAllCodeFetcher
 import os
 from dotenv import load_dotenv
 
@@ -25,7 +26,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-class StockPriceFetcher:
+class StockAPriceFetcher:
     """股票数据获取器，用于批量获取股票数据"""
 
     def __init__(self, provider: Optional[Union[StockDataProvider, str]] = None):
@@ -34,10 +35,15 @@ class StockPriceFetcher:
         """
         self.logger = logging.getLogger(__name__)
         self.available_providers = {
-            'akshare': StockPriceProviderAkshare
+            'akshare': StockPriceProviderAkshare,
+            'tushare': StockPriceProviderTushare  # 添加tushare提供者
         }
 
-        self.set_provider(provider or 'akshare')
+        try:
+            self.set_provider(provider or 'akshare')
+        except Exception as e:
+            self.logger.error(f"初始化数据提供者失败: {str(e)}")
+            raise
 
     def set_provider(self, provider: Union[StockDataProvider, str]):
         """设置数据提供者
@@ -52,8 +58,12 @@ class StockPriceFetcher:
                     f"未知的数据提供者: '{provider_name}'。可用的提供者: {available_names}")
 
             provider_class = self.available_providers[provider_name]
-            self.provider = provider_class()
-            self.logger.info(f'已切换数据提供者为: {provider_name}')
+            try:
+                self.provider = provider_class()
+                self.logger.info(f'已切换数据提供者为: {provider_name}')
+            except Exception as e:
+                self.logger.error(f"初始化数据提供者 {provider_name} 失败: {str(e)}")
+                raise
         elif isinstance(provider, StockDataProvider):
             self.provider = provider
             self.logger.info(f'已切换数据提供者为: {provider.__class__.__name__}')
@@ -77,10 +87,10 @@ class StockPriceFetcher:
         """
         return self.provider.get_company_info(symbol)
 
-    def fetch_multiple_stock_price(self, symbols: List[str],
-                                   start_date: Optional[str] = None,
-                                   end_date: Optional[str] = None,
-                                   max_workers: int = 10) -> pd.DataFrame:
+    def fetch_stock_price_batch(self, symbols: List[str],
+                                start_date: Optional[str] = None,
+                                end_date: Optional[str] = None,
+                                max_workers: int = 10) -> pd.DataFrame:
         """批量获取多个股票的数据
         :param symbols: 股票代码列表
         :param start_date: 开始日期，格式为 'YYYY-MM-DD'
@@ -116,8 +126,31 @@ class StockPriceFetcher:
             return pd.concat(results, ignore_index=True)
         return pd.DataFrame()  # 如果没有成功获取任何数据，返回空DataFrame
 
-    def get_all_stock_codes(self) -> List[str]:
-        """获取所有股票代码
-        :return: 股票代码列表
+    def fetch_stock_price_all(self, start_date: Optional[str] = '2000-01-01',
+                              end_date: Optional[str] = None,
+                              max_workers: int = 10) -> pd.DataFrame:
+        """获取所有A股股票的价格数据
+
+        :param start_date: 开始日期，格式为 'YYYY-MM-DD'
+        :param end_date: 结束日期，格式为 'YYYY-MM-DD'
+        :param max_workers: 最大线程数，默认为 10
+        :return: 合并后的所有股票数据 DataFrame
         """
-        return self.provider.get_all_stock_codes()
+        # 创建股票代码获取器
+        code_fetcher = StockAAllCodeFetcher()
+
+        # 获取所有股票代码
+        try:
+            all_stock_codes = code_fetcher.get_all_stock_codes()
+            self.logger.info(f"成功获取所有A股股票代码，共 {len(all_stock_codes)} 个")
+
+            # 调用批量获取方法
+            return self.fetch_stock_price_batch(
+                symbols=all_stock_codes,
+                start_date=start_date,
+                end_date=end_date,
+                max_workers=max_workers
+            )
+        except Exception as e:
+            self.logger.error(f"获取所有股票数据失败: {str(e)}")
+            return pd.DataFrame()  # 如果失败，返回空DataFrame

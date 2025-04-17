@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from fetcher.stock_price_provider_akshare import StockPriceProviderAkshare
+from fetcher.stock_a_price_provider_akshare import StockPriceProviderAkshare
 import unittest
 import pandas as pd
 from datetime import datetime, timedelta
