@@ -18,8 +18,3 @@ class StockDataProvider(ABC):
     def get_company_info(self, symbol: str) -> Dict[str, Any]:
         """获取公司信息的抽象方法"""
         pass
-
-    @abstractmethod
-    def get_all_stock_codes(self) -> List[str]:
-        """获取所有股票代码的抽象方法"""
-        pass
