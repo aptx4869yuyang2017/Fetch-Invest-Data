@@ -7,6 +7,7 @@ from tracemalloc import start
 import unittest
 import subprocess
 from pathlib import Path
+from fetcher import sw_index_fetcher
 from fetcher.stock_a_price_fetcher import StockAPriceFetcher
 from datautils import FileStorage, DBStorage
 from fetcher.financial_report_fetcher import FinancialReportFetcher
@@ -15,9 +16,11 @@ from fetcher.sw_index_fetcher import SWIndexFetcher
 from fetcher.index_weight_fetcher import IndexWeightFetcher
 from fetcher.stock_info_fetcher import StockInfoFetcher
 from fetcher.stock_share_info_fetcher import StockShareInfoFetcher
-# from fetcher.stock_indicator_fetcher需要vpn返回报错过多 import StockIndicatorFetcher
+from fetcher.stock_indicator_fetcher import StockIndicatorFetcher
 from fetcher.stock_value_fetcher import StockValueFetcher
 from fetcher.macro_data_china_fetcher import MacroDataChinaFetcher
+from fetcher.stock_dividend_fetcher import StockDividendFetcher
+from fetcher.stock_a_all_code_fetcher import StockAAllCodeFetcher
 
 fs = FileStorage()
 db = DBStorage()
@@ -73,10 +76,10 @@ def run_tests():
 def fetch_stock_a_price(end_date):
     logger = logging.getLogger(__name__)
 
-    fetcher = StockAPriceFetcher('akshare')
+    fetcher = StockAPriceFetcher('tushare')
 
     res = fetcher.fetch_stock_price_all(
-        start_date='2000-01-01', end_date=end_date, max_workers=10)
+        start_date='2000-01-01', end_date=end_date, max_workers=3)
 
     # 初始化文件存储并保存数据
     # fs.save_to_csv(res, 'stock_price')
@@ -103,24 +106,36 @@ def fetch_etf_price(end_date):
 
 def fetch_financial_report():
     logger = logging.getLogger(__name__)
-    fetcher = StockAPriceFetcher('akshare')
+    fetcher = StockAAllCodeFetcher()
     stock_list = fetcher.get_all_stock_codes()
+    # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
 
     fetcher = FinancialReportFetcher('akshare')
 
     # 获取财务数据
 
-    multiple_financial_data = fetcher.fetch_multiple_balance_sheets(
-        symbols=stock_list[-10:], max_workers=10)
+    # balance = fetcher.fetch_multiple_balance_sheets(
+    #     symbols=stock_list, max_workers=3, delay=2)
+    # income = fetcher.fetch_multiple_income_statements(
+    #     symbols=stock_list, max_workers=3, delay=2)
+    cash_flow = fetcher.fetch_multiple_cash_flow_statements(
+        symbols=stock_list, max_workers=5, delay=2)
+
     # 保存数据
     storage = FileStorage()
-    storage.save_to_csv(multiple_financial_data, 'cash_flow_statement')
-    storage.save_to_parquet(multiple_financial_data, 'balance_sheet_statement')
+    # storage.save_to_csv(balance, 'balance_sheet_statement')
+    # storage.save_to_parquet(balance, 'balance_sheet_statement')
+
+    # storage.save_to_csv(income, 'income_statement')
+    # storage.save_to_parquet(income, 'income_statement')
+
+    storage.save_to_csv(cash_flow, 'cash_flow_statement')
+    storage.save_to_parquet(cash_flow, 'cash_flow_statement')
 
     logger.info('财务已成功保存到文件中')
 
 
-def fetch_sw_index_data(get_data=False):
+def fetch_sw_index_data(get_data=True):
     logger = logging.getLogger(__name__)
     logger.info('开始获取申万行业指数数据...')
 
@@ -131,20 +146,16 @@ def fetch_sw_index_data(get_data=False):
 
         # 获取所有申万三级行业代码
         level3 = sw_fetcher.get_sw_level3_info()
-        fs.save_to_csv(level3, 'sw_level3')
         fs.save_to_parquet(level3, 'sw_level3')
 
         sw_stock = sw_fetcher.get_all_sw_stock_info(
             sw_fetcher.get_sw_level3_codes())
-        fs.save_to_csv(sw_stock, 'sw_stock')
         fs.save_to_parquet(sw_stock, 'sw_stock')
 
         level2 = sw_fetcher.get_sw_level2_info(use_cache=False)
-        fs.save_to_csv(level2, 'sw_level2')
         fs.save_to_parquet(level2, 'sw_level2')
 
         level1 = sw_fetcher.get_sw_level1_info(use_cache=False)
-        fs.save_to_csv(level1, 'sw_level1')
         fs.save_to_parquet(level1, 'sw_level1')
         logger.info('申万三级行业成分股数据已成功保存到文件中')
 
@@ -168,6 +179,13 @@ def fetch_sw_index_data(get_data=False):
     fs.save_to_csv(sw_dim, 'sw_dim')
     fs.save_to_parquet(sw_dim, 'sw_dim')
 
+    # 删除临时文件
+    import os
+    for file in file_list:
+        if os.path.exists(file):
+            os.remove(file)
+            logger.info(f'SW数据临时文件 {file} 已删除')
+
 
 def read_parquet():
     logger = logging.getLogger(__name__)
@@ -189,7 +207,7 @@ def fetch_index_weights():
 
     # 获取所有中证指数代码
     # 这里可以根据需要设置具体的指数列表，例如：
-    index_list = ['000300', '000905', '399006']  # 沪深300、中证500、创业板指
+    index_list = ['000300', '000905']  # 沪深300、中证500、创业板指
 
     # 获取指数权重数据
     index_weights = index_fetcher.get_multiple_index_weights(
@@ -245,24 +263,25 @@ def fetch_stock_share_info():
     logger.info(f'A股股票股本结构数据已成功保存，共 {len(stock_share_info)} 条记录')
 
 
-# def fetch_stock_indicators():
-#     logger = logging.getLogger(__name__)
-#     logger.info('开始获取A股股票财务指标数据...')
+def fetch_stock_indicators():
+    logger = logging.getLogger(__name__)
+    logger.info('开始获取A股股票财务指标数据...')
 
-#     # 初始化股票财务指标获取器
-#     stock_indicator_fetcher = StockIndicatorFetcher()
+    # 初始化股票财务指标获取器
+    stock_indicator_fetcher = StockIndicatorFetcher()
 
-#     # 获取所有A股股票的财务指标信息
-#     stock_indicators = stock_indicator_fetcher.get_stock_indicator_all(
-#         max_workers=5,
-#         delay=0.5
-#     )
+    # 获取所有A股股票的财务指标信息
+    stock_indicators = stock_indicator_fetcher.get_stock_indicator_all(
+        max_workers=2,
+        delay=1,
+        symbol_range=(0, 500)
+    )
 
-#     # 保存数据
-#     fs.save_to_csv(stock_indicators, 'stock_indicators')
-#     fs.save_to_parquet(stock_indicators, 'stock_indicators')
+    # 保存数据
+    fs.save_to_csv(stock_indicators, 'stock_indicators-500')
+    fs.save_to_parquet(stock_indicators, 'stock_indicators-500')
 
-#     logger.info(f'A股股票财务指标数据已成功保存，共 {len(stock_indicators)} 条记录')
+    logger.info(f'A股股票财务指标数据已成功保存，共 {len(stock_indicators)} 条记录')
 
 
 def fetch_stock_value(start_date, end_date):
@@ -325,9 +344,33 @@ def fetch_macro_data_china():
     logger.info(f'中国GDP月度数据已成功保存，共 {len(gdp_monthly)} 条记录')
 
 
-def regular_run():
+def fetch_stock_dividend():
     logger = logging.getLogger(__name__)
-    logger.info('开始获取A股股票财务指标数据...')
+    logger.info('开始获取A股股票分红数据...')
+
+    # 初始化股票分红数据获取器
+    stock_dividend_fetcher = StockDividendFetcher()
+
+    # 获取所有A股股票的分红数据
+    stock_dividends = stock_dividend_fetcher.get_stock_dividend_all(
+        max_workers=1,
+        delay=5
+    )
+
+    # stock_dividends = stock_dividend_fetcher.get_stock_dividend_batch(
+    #     ["601398", "000001", "000002"]
+    # )
+
+    # 保存数据
+    fs.save_to_csv(stock_dividends, 'stock_dividends')
+    fs.save_to_parquet(stock_dividends, 'stock_dividends')
+
+    logger.info(f'A股股票分红数据已成功保存，共 {len(stock_dividends)} 条记录')
+
+
+def monthly_run():
+    logger = logging.getLogger(__name__)
+    logger.info('开始 monthly_run...')
 
     # 执行单元测试
     tests_passed = run_tests()
@@ -335,26 +378,43 @@ def regular_run():
         logger.warning('单元测试未通过，请检查测试失败的原因')
         return
 
-    end_date = '2023-03-31'
-    fetch_stock_a_price(end_date=end_date)
-    fetch_etf_price(end_date=end_date)
+    end_date = '2023-08-31'
+    # fetch_stock_a_price(end_date=end_date)
+    # fetch_etf_price(end_date=end_date)
     # A股指标数据
-    fetch_stock_value(start_date='2025-01-01', end_date='2025-12-31')
+    # fetch_stock_value(start_date='2025-01-01', end_date='2025-12-31')
 
     # 获取申万行业指数数据
-    fetch_sw_index_data()
+    # fetch_sw_index_data()
 
     # 获取中证指数成分股权重数据
-    fetch_index_weights()
+    # fetch_index_weights()
 
     # 获取A股股票基本信息
-    fetch_stock_info()
+    # fetch_stock_info()
 
     # 获取A股股票股本结构数据
-    fetch_stock_share_info()
+    # fetch_stock_share_info()
 
     # 获取中国宏观经济数据
-    fetch_macro_data_china()
+    # fetch_macro_data_china()
+
+
+def quarterly_run():
+    logger = logging.getLogger(__name__)
+    logger.info('开始 quarterly_run...')
+
+    # 获取A股股票分红数据
+    # fetch_stock_dividend()
+
+    fetch_financial_report()
+
+
+def dim_run():
+    fetch_index_weights()
+    # fetch_sw_index_data(get_data=True)
+    # fetch_stock_share_info()
+    # fetch_stock_info()
 
 
 def main():
@@ -367,9 +427,13 @@ def main():
         config = load_config()
         logger.info('应用启动成功')
 
-        fetch_macro_data_china()
+        # fetch_stock_indicators()
+        # 获取股票分红数据
+        # fetch_stock_dividend()
 
-        # regular_run()
+        # monthly_run()
+        # quarterly_run()
+        dim_run()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')
