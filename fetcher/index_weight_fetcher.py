@@ -29,7 +29,17 @@ class IndexWeightFetcher:
             symbol (str): 指数代码，如 "000300" 表示沪深300
 
         Returns:
-            pandas.DataFrame: 包含指数成分股权重的DataFrame
+            pandas.DataFrame: 包含指数成分股权重的DataFrame，字段包括：
+            - date: 日期
+            - index_code: 指数代码
+            - index_name: 指数名称
+            - index_name_en: 指数英文名称
+            - stock_code: 股票代码
+            - stock_name: 股票名称
+            - stock_name_en: 成分券英文名称
+            - exchange: 交易所
+            - exchange_en: 交易所英文名称
+            - weight: 权重
         """
         # 移除缓存相关代码
 
@@ -39,12 +49,18 @@ class IndexWeightFetcher:
 
             # 定义中英文列名映射
             column_mapping = {
+                '日期': 'date',
+                '指数代码': 'index_code',
+                '指数名称': 'index_name',
+                '指数英文名称': 'index_name_en',
                 '成分券代码': 'stock_code',
                 '成分券名称': 'stock_name',
+                '成分券英文名称': 'stock_name_en',
+                '交易所': 'exchange',
+                '交易所英文名称': 'exchange_en',
                 '权重(%)': 'weight',
                 '纳入日期': 'inclusion_date',
-                '纳入市值': 'inclusion_market_value',
-                '交易所': 'exchange'
+                '纳入市值': 'inclusion_market_value'
             }
 
             # 重命名列名
