@@ -10,7 +10,7 @@ from pathlib import Path
 from fetcher import sw_index_fetcher
 from fetcher.stock_a_price_fetcher import StockAPriceFetcher
 from datautils import FileStorage, DBStorage
-from fetcher.financial_report_fetcher import FinancialReportFetcher
+from fetcher.a_financial_report_fetcher import AFinancialReportFetcher
 from fetcher.etf_price_fetcher import ETFPriceFetcher
 from fetcher.sw_index_fetcher import SWIndexFetcher
 from fetcher.index_weight_fetcher import IndexWeightFetcher
@@ -21,6 +21,7 @@ from fetcher.stock_value_fetcher import StockValueFetcher
 from fetcher.macro_data_china_fetcher import MacroDataChinaFetcher
 from fetcher.stock_dividend_fetcher import StockDividendFetcher
 from fetcher.stock_a_all_code_fetcher import StockAAllCodeFetcher
+from fetcher.stock_hk_connector_all_code_fetcher import StockHKConnectorAllCodeFetcher
 
 fs = FileStorage()
 db = DBStorage()
@@ -106,31 +107,31 @@ def fetch_etf_price(end_date):
 
 def fetch_financial_report():
     logger = logging.getLogger(__name__)
-    fetcher = StockAAllCodeFetcher()
-    stock_list = fetcher.get_all_stock_codes()
+    a_fin_report_fetcher = StockAAllCodeFetcher()
+    stock_list = a_fin_report_fetcher.get_all_stock_codes()
     # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
 
-    fetcher = FinancialReportFetcher('akshare')
+    a_fin_report_fetcher = AFinancialReportFetcher('akshare')
 
     # 获取财务数据
 
-    # balance = fetcher.fetch_multiple_balance_sheets(
-    #     symbols=stock_list, max_workers=3, delay=2)
-    # income = fetcher.fetch_multiple_income_statements(
-    #     symbols=stock_list, max_workers=3, delay=2)
-    cash_flow = fetcher.fetch_multiple_cash_flow_statements(
-        symbols=stock_list, max_workers=5, delay=2)
-
     # 保存数据
     storage = FileStorage()
-    # storage.save_to_csv(balance, 'balance_sheet_statement')
-    # storage.save_to_parquet(balance, 'balance_sheet_statement')
 
-    # storage.save_to_csv(income, 'income_statement')
-    # storage.save_to_parquet(income, 'income_statement')
+    a_balance = a_fin_report_fetcher.fetch_multiple_balance_sheets(
+        symbols=stock_list, max_workers=10, delay=2)
+    storage.save_to_csv(a_balance, 'a_balance_sheet_statement')
+    storage.save_to_parquet(a_balance, 'a_balance_sheet_statement')
 
-    storage.save_to_csv(cash_flow, 'cash_flow_statement')
-    storage.save_to_parquet(cash_flow, 'cash_flow_statement')
+    # a_income = a_fin_report_fetcher.fetch_multiple_income_statements(
+    #     symbols=stock_list, max_workers=6, delay=2)
+    # storage.save_to_csv(a_income, 'a_income_statement')
+    # storage.save_to_parquet(a_income, 'a_income_statement')
+
+    # a_cash_flow = a_fin_report_fetcher.fetch_multiple_cash_flow_statements(
+    #     symbols=stock_list, max_workers=6, delay=2)
+    # storage.save_to_csv(a_cash_flow, 'a_cash_flow_statement')
+    # storage.save_to_parquet(a_cash_flow, 'a_cash_flow_statement')
 
     logger.info('财务已成功保存到文件中')
 
@@ -417,6 +418,12 @@ def dim_run():
     # fetch_stock_info()
 
 
+def test_run():
+    fetcher = StockHKConnectorAllCodeFetcher()
+    ggt_all_code = fetcher.get_all_stock_codes()
+    print(ggt_all_code[:5])
+
+
 def main():
     # 设置日志
     setup_logging('INFO')
@@ -432,8 +439,9 @@ def main():
         # fetch_stock_dividend()
 
         # monthly_run()
-        # quarterly_run()
-        dim_run()
+        quarterly_run()
+        # dim_run()
+        # test_run()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')

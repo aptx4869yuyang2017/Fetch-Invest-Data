@@ -6,11 +6,11 @@ import pandas as pd
 import logging
 from typing import Dict, Any, Optional
 
-from fetcher.financial_report_provider import FinancialReportProvider
+from fetcher.base_financial_report_provider import FinancialReportProvider
 from utils.stock_utils import get_full_symbol
 
 
-class FinancialReportProviderAkshare(FinancialReportProvider):
+class AFinancialReportProviderAkshare(FinancialReportProvider):
     """基于AkShare的财务报表数据提供者实现"""
 
     def __init__(self):

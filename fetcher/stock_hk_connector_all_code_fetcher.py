@@ -8,7 +8,7 @@ import sys
 import os
 
 
-class StockGGTAllCodeFetcher:
+class StockHKConnectorAllCodeFetcher:
     """港股通股票代码获取器"""
 
     def __init__(self):
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # 测试获取港股通股票代码
-    fetcher = StockGGTAllCodeFetcher()
+    fetcher = StockHKConnectorAllCodeFetcher()
 
     # 仅获取代码
     codes = fetcher.get_all_stock_codes()

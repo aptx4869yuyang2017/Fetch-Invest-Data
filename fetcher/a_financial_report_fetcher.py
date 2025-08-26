@@ -9,8 +9,8 @@ import pandas as pd
 import time
 from dotenv import load_dotenv
 
-from .financial_report_provider import FinancialReportProvider
-from .financial_report_provider_akshare import FinancialReportProviderAkshare
+from .base_financial_report_provider import FinancialReportProvider
+from .a_financial_report_provider_akshare import AFinancialReportProviderAkshare
 
 # 加载环境变量
 load_dotenv()
@@ -18,7 +18,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class FinancialReportFetcher:
+class AFinancialReportFetcher:
     """财务报表数据获取器，用于批量获取财务报表数据"""
 
     def __init__(self, provider: Optional[Union[FinancialReportProvider, str]] = None):
@@ -29,7 +29,7 @@ class FinancialReportFetcher:
         """
         self.logger = logging.getLogger(__name__)
         self.available_providers = {
-            'akshare': FinancialReportProviderAkshare,
+            'akshare': AFinancialReportProviderAkshare,
             # 可以在这里添加其他数据提供者
         }
 
@@ -105,7 +105,7 @@ class FinancialReportFetcher:
             self.logger.error(
                 f"获取股票 {symbol} 的利润表数据失败: {str(e)}", exc_info=True)
             return pd.DataFrame()
-    
+
     def fetch_cash_flow_statement(self, symbol: str) -> pd.DataFrame:
         """获取单个股票的现金流量表数据
 
@@ -130,7 +130,7 @@ class FinancialReportFetcher:
             return pd.DataFrame()
 
     def fetch_multiple_cash_flow_statements(self, symbols: List[str], max_workers: int = 5,
-                                          delay: float = 0.5, merge_results: bool = True) -> Union[Dict[str, pd.DataFrame], pd.DataFrame]:
+                                            delay: float = 0.5, merge_results: bool = True) -> Union[Dict[str, pd.DataFrame], pd.DataFrame]:
         """批量获取多个股票的现金流量表数据
 
         Args:
@@ -248,7 +248,7 @@ class FinancialReportFetcher:
         return results
 
     def fetch_multiple_income_statements(self, symbols: List[str], max_workers: int = 5,
-                                        delay: float = 0.5, merge_results: bool = True) -> Union[Dict[str, pd.DataFrame], pd.DataFrame]:
+                                         delay: float = 0.5, merge_results: bool = True) -> Union[Dict[str, pd.DataFrame], pd.DataFrame]:
         """批量获取多个股票的利润表数据
 
         Args:
