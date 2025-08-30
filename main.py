@@ -22,6 +22,7 @@ from fetcher.macro_data_china_fetcher import MacroDataChinaFetcher
 from fetcher.stock_dividend_fetcher import StockDividendFetcher
 from fetcher.stock_a_all_code_fetcher import StockAAllCodeFetcher
 from fetcher.stock_hk_connector_all_code_fetcher import StockHKConnectorAllCodeFetcher
+from fetcher.hk_connector_finacial_report_fetcher import HKConnectorFinancialReportFetcher
 
 fs = FileStorage()
 db = DBStorage()
@@ -105,10 +106,40 @@ def fetch_etf_price(end_date):
     logger.info('ETF数据已成功保存到文件中')
 
 
-def fetch_financial_report():
+def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay=2, report_types=None):
+    """获取A股股票的财务报表数据
+
+    Args:
+        symbols: 可选，指定A股股票代码列表。如果为None且fetch_all=True，则获取所有A股股票
+        fetch_all: 是否获取所有A股股票。如果为True且symbols为None，则获取所有A股股票
+        max_workers: 最大线程数，默认为10
+        delay: 每个请求之间的延迟时间(秒)，避免频繁请求被限制，默认2秒
+        report_types: 可选，指定要获取的财务报表类型列表。如果为None，则获取所有报表
+                     可选值: ['balance_sheet', 'income_statement', 'cash_flow_statement']
+    """
     logger = logging.getLogger(__name__)
+    logger.info('开始获取A股股票财务报表数据...')
+
+    # 默认获取所有报表类型
+    if report_types is None:
+        report_types = ['balance_sheet',
+                        'income_statement', 'cash_flow_statement']
+
     a_fin_report_fetcher = StockAAllCodeFetcher()
-    stock_list = a_fin_report_fetcher.get_all_stock_codes()
+
+    # 获取A股股票代码列表
+    if symbols is None:
+        if fetch_all:
+            logger.info('获取所有A股股票代码...')
+            stock_list = a_fin_report_fetcher.get_all_stock_codes()
+            logger.info(f'成功获取 {len(stock_list)} 个A股股票代码')
+        else:
+            logger.warning('symbols为None且fetch_all为False，无法获取A股股票代码')
+            return
+    else:
+        stock_list = symbols
+        logger.info(f'使用指定的 {len(stock_list)} 个A股股票代码')
+
     # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
 
     a_fin_report_fetcher = AFinancialReportFetcher('akshare')
@@ -118,22 +149,101 @@ def fetch_financial_report():
     # 保存数据
     storage = FileStorage()
 
-    a_balance = a_fin_report_fetcher.fetch_multiple_balance_sheets(
-        symbols=stock_list, max_workers=10, delay=2)
-    storage.save_to_csv(a_balance, 'a_balance_sheet_statement')
-    storage.save_to_parquet(a_balance, 'a_balance_sheet_statement')
+    if 'balance_sheet' in report_types:
+        logger.info('开始获取资产负债表数据...')
+        a_balance = a_fin_report_fetcher.fetch_multiple_balance_sheets(
+            symbols=stock_list, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(a_balance, 'a_balance_sheet_statement')
+        storage.save_to_parquet(a_balance, 'a_balance_sheet_statement')
+        logger.info(f'资产负债表数据已成功保存，共 {len(a_balance)} 条记录')
 
-    # a_income = a_fin_report_fetcher.fetch_multiple_income_statements(
-    #     symbols=stock_list, max_workers=6, delay=2)
-    # storage.save_to_csv(a_income, 'a_income_statement')
-    # storage.save_to_parquet(a_income, 'a_income_statement')
+    if 'income_statement' in report_types:
+        logger.info('开始获取利润表数据...')
+        a_income = a_fin_report_fetcher.fetch_multiple_income_statements(
+            symbols=stock_list, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(a_income, 'a_income_statement')
+        storage.save_to_parquet(a_income, 'a_income_statement')
+        logger.info(f'利润表数据已成功保存，共 {len(a_income)} 条记录')
 
-    # a_cash_flow = a_fin_report_fetcher.fetch_multiple_cash_flow_statements(
-    #     symbols=stock_list, max_workers=6, delay=2)
-    # storage.save_to_csv(a_cash_flow, 'a_cash_flow_statement')
-    # storage.save_to_parquet(a_cash_flow, 'a_cash_flow_statement')
+    if 'cash_flow_statement' in report_types:
+        logger.info('开始获取现金流量表数据...')
+        a_cash_flow = a_fin_report_fetcher.fetch_multiple_cash_flow_statements(
+            symbols=stock_list, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(a_cash_flow, 'a_cash_flow_statement')
+        storage.save_to_parquet(a_cash_flow, 'a_cash_flow_statement')
+        logger.info(f'现金流量表数据已成功保存，共 {len(a_cash_flow)} 条记录')
 
-    logger.info('财务已成功保存到文件中')
+    logger.info('A股财务报表数据获取完成')
+
+
+def fetch_hk_connector_financial_report(symbols=None, fetch_all=True, max_workers=5, delay=3, report_types=None):
+    """获取港股通股票的财务报表数据
+
+    Args:
+        symbols: 可选，指定港股通股票代码列表。如果为None且fetch_all=True，则获取所有港股通股票
+        fetch_all: 是否获取所有港股通股票。如果为True且symbols为None，则获取所有港股通股票
+        max_workers: 最大线程数，默认为5
+        delay: 每个请求之间的延迟时间(秒)，避免频繁请求被限制，默认0.5秒
+        report_types: 可选，指定要获取的财务报表类型列表。如果为None，则获取所有报表
+                     可选值: ['balance_sheet', 'income_statement', 'cash_flow_statement']
+    """
+    logger = logging.getLogger(__name__)
+    logger.info('开始获取港股通股票财务报表数据...')
+
+    # 默认获取所有报表类型
+    if report_types is None:
+        report_types = ['balance_sheet',
+                        'income_statement', 'cash_flow_statement']
+
+    # 初始化港股通股票代码获取器
+    hk_code_fetcher = StockHKConnectorAllCodeFetcher()
+
+    # 初始化港股通财务报表获取器
+    hk_fin_report_fetcher = HKConnectorFinancialReportFetcher('akshare')
+
+    # 初始化文件存储
+    storage = FileStorage()
+
+    # 获取港股通股票代码列表
+    if symbols is None:
+        if fetch_all:
+            logger.info('获取所有港股通股票代码...')
+            symbols = hk_code_fetcher.get_all_stock_codes()
+            logger.info(f'成功获取 {len(symbols)} 个港股通股票代码')
+        else:
+            logger.warning('symbols为None且fetch_all为False，无法获取港股通股票代码')
+            return
+    else:
+        logger.info(f'使用指定的 {len(symbols)} 个港股通股票代码')
+
+    # 获取资产负债表数据
+    if 'balance_sheet' in report_types:
+        logger.info('开始获取港股通股票资产负债表数据...')
+        hk_balance = hk_fin_report_fetcher.fetch_multiple_balance_sheets(
+            symbols=symbols, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(hk_balance, 'hk_balance_sheet_statement')
+        storage.save_to_parquet(hk_balance, 'hk_balance_sheet_statement')
+        logger.info(f'港股通股票资产负债表数据已成功保存，共 {len(hk_balance)} 条记录')
+
+    # 获取利润表数据
+    if 'income_statement' in report_types:
+        logger.info('开始获取港股通股票利润表数据...')
+        hk_income = hk_fin_report_fetcher.fetch_multiple_income_statements(
+            symbols=symbols, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(hk_income, 'hk_income_statement')
+        storage.save_to_parquet(hk_income, 'hk_income_statement')
+        logger.info(f'港股通股票利润表数据已成功保存，共 {len(hk_income)} 条记录')
+
+    # 获取现金流量表数据
+    if 'cash_flow_statement' in report_types:
+        logger.info('开始获取港股通股票现金流量表数据...')
+        hk_cash_flow = hk_fin_report_fetcher.fetch_multiple_cash_flow_statements(
+            symbols=symbols, max_workers=max_workers, delay=delay)
+        storage.save_to_csv(hk_cash_flow, 'hk_cash_flow_statement')
+        storage.save_to_parquet(hk_cash_flow, 'hk_cash_flow_statement')
+        logger.info(f'港股通股票现金流量表数据已成功保存，共 {len(hk_cash_flow)} 条记录')
+
+    logger.info('港股通股票财务报表数据获取完成')
 
 
 def fetch_sw_index_data(get_data=True):
@@ -408,7 +518,25 @@ def quarterly_run():
     # 获取A股股票分红数据
     # fetch_stock_dividend()
 
-    fetch_financial_report()
+    # 获取A股财务报表数据（资产负债表、利润表、现金流量表）
+    fetch_a_financial_report(
+        symbols=None,              # None表示使用所有A股股票
+        fetch_all=True,            # 获取所有A股股票
+        max_workers=10,            # 最大线程数
+        delay=2,                   # 请求延迟时间（秒）
+        report_types=['balance_sheet', 'income_statement',
+                      'cash_flow_statement']  # 获取所有类型报表
+    )
+
+    # 获取港股通财务报表数据（资产负债表、利润表、现金流量表）
+    fetch_hk_connector_financial_report(
+        symbols=None,              # None表示使用所有港股通股票
+        fetch_all=True,            # 获取所有港股通股票
+        max_workers=5,             # 最大线程数
+        delay=3,                   # 请求延迟时间（秒）
+        report_types=['balance_sheet', 'income_statement',
+                      'cash_flow_statement']  # 获取所有类型报表
+    )
 
 
 def dim_run():
@@ -419,9 +547,15 @@ def dim_run():
 
 
 def test_run():
-    fetcher = StockHKConnectorAllCodeFetcher()
-    ggt_all_code = fetcher.get_all_stock_codes()
-    print(ggt_all_code[:5])
+    # 测试获取港股通财务报表数据
+    fetch_hk_connector_financial_report(
+        symbols=None,              # None表示使用所有港股通股票
+        fetch_all=True,            # 获取所有港股通股票
+        max_workers=5,             # 最大线程数
+        delay=3,                   # 请求延迟时间（秒）
+        report_types=['balance_sheet', 'income_statement',
+                      'cash_flow_statement']  # 获取所有类型报表
+    )
 
 
 def main():
