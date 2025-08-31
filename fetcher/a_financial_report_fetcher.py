@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from .base_financial_report_provider import FinancialReportProvider
 from .a_financial_report_provider_akshare import AFinancialReportProviderAkshare
+from .a_financial_report_provider_tushare import AFinancialReportProviderTushare
 
 # 加载环境变量
 load_dotenv()
@@ -30,6 +31,7 @@ class AFinancialReportFetcher:
         self.logger = logging.getLogger(__name__)
         self.available_providers = {
             'akshare': AFinancialReportProviderAkshare,
+            'tushare': AFinancialReportProviderTushare,
             # 可以在这里添加其他数据提供者
         }
 

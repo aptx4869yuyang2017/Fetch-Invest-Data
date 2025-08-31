@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from .base_financial_report_provider import FinancialReportProvider
 from .hk_connector_finacial_report_provider import HKConnectorFinancialReportProvider
+from utils.df_utils import safe_concat
 
 # 加载环境变量
 load_dotenv()
@@ -182,7 +183,8 @@ class HKConnectorFinancialReportFetcher:
                     # 添加股票代码列
                     df = df.copy()
                     df['symbol'] = symbol
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    merged_df = pd.concat(
+                        [merged_df, df], ignore_index=True, sort=False)
 
             self.logger.info(f"已将 {success_count} 只港股的现金流量表数据合并为一个DataFrame")
             return merged_df
@@ -242,7 +244,8 @@ class HKConnectorFinancialReportFetcher:
                     # 添加股票代码列
                     df = df.copy()
                     df['symbol'] = symbol
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    merged_df = pd.concat(
+                        [merged_df, df], ignore_index=True, sort=False)
 
             self.logger.info(f"已将 {success_count} 只港股的资产负债表数据合并为一个DataFrame")
             return merged_df
@@ -302,7 +305,8 @@ class HKConnectorFinancialReportFetcher:
                     # 添加股票代码列
                     df = df.copy()
                     df['symbol'] = symbol
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    merged_df = pd.concat(
+                        [merged_df, df], ignore_index=True, sort=False)
 
             self.logger.info(f"已将 {success_count} 只港股的利润表数据合并为一个DataFrame")
             return merged_df
