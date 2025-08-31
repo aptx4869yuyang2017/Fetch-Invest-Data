@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import pandas as pd
 import configparser
 from tracemalloc import start
 import unittest
@@ -23,6 +24,7 @@ from fetcher.stock_dividend_fetcher import StockDividendFetcher
 from fetcher.stock_a_all_code_fetcher import StockAAllCodeFetcher
 from fetcher.stock_hk_connector_all_code_fetcher import StockHKConnectorAllCodeFetcher
 from fetcher.hk_connector_finacial_report_fetcher import HKConnectorFinancialReportFetcher
+from utils.stock_utils import get_full_symbol
 
 fs = FileStorage()
 db = DBStorage()
@@ -106,7 +108,7 @@ def fetch_etf_price(end_date):
     logger.info('ETF数据已成功保存到文件中')
 
 
-def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay=2, report_types=None):
+def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay=2, report_types=None, provider='tushare'):
     """获取A股股票的财务报表数据
 
     Args:
@@ -116,9 +118,10 @@ def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay
         delay: 每个请求之间的延迟时间(秒)，避免频繁请求被限制，默认2秒
         report_types: 可选，指定要获取的财务报表类型列表。如果为None，则获取所有报表
                      可选值: ['balance_sheet', 'income_statement', 'cash_flow_statement']
+        provider: 数据源提供者，默认为'akshare'
     """
     logger = logging.getLogger(__name__)
-    logger.info('开始获取A股股票财务报表数据...')
+    logger.info(f'开始获取A股股票财务报表数据(使用 {provider} 数据源)...')
 
     # 默认获取所有报表类型
     if report_types is None:
@@ -140,9 +143,7 @@ def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay
         stock_list = symbols
         logger.info(f'使用指定的 {len(stock_list)} 个A股股票代码')
 
-    # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
-
-    a_fin_report_fetcher = AFinancialReportFetcher('akshare')
+    a_fin_report_fetcher = AFinancialReportFetcher(provider)
 
     # 获取财务数据
 
@@ -153,24 +154,27 @@ def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay
         logger.info('开始获取资产负债表数据...')
         a_balance = a_fin_report_fetcher.fetch_multiple_balance_sheets(
             symbols=stock_list, max_workers=max_workers, delay=delay)
-        storage.save_to_csv(a_balance, 'a_balance_sheet_statement')
         storage.save_to_parquet(a_balance, 'a_balance_sheet_statement')
+        storage.save_to_csv(a_balance.head(5000), 'a_balance_sheet_statement')
+
         logger.info(f'资产负债表数据已成功保存，共 {len(a_balance)} 条记录')
 
     if 'income_statement' in report_types:
         logger.info('开始获取利润表数据...')
         a_income = a_fin_report_fetcher.fetch_multiple_income_statements(
             symbols=stock_list, max_workers=max_workers, delay=delay)
-        storage.save_to_csv(a_income, 'a_income_statement')
         storage.save_to_parquet(a_income, 'a_income_statement')
+        storage.save_to_csv(a_income.head(5000), 'a_income_statement')
+
         logger.info(f'利润表数据已成功保存，共 {len(a_income)} 条记录')
 
     if 'cash_flow_statement' in report_types:
         logger.info('开始获取现金流量表数据...')
         a_cash_flow = a_fin_report_fetcher.fetch_multiple_cash_flow_statements(
             symbols=stock_list, max_workers=max_workers, delay=delay)
-        storage.save_to_csv(a_cash_flow, 'a_cash_flow_statement')
         storage.save_to_parquet(a_cash_flow, 'a_cash_flow_statement')
+        storage.save_to_csv(a_cash_flow.head(5000), 'a_cash_flow_statement')
+
         logger.info(f'现金流量表数据已成功保存，共 {len(a_cash_flow)} 条记录')
 
     logger.info('A股财务报表数据获取完成')
@@ -518,25 +522,28 @@ def quarterly_run():
     # 获取A股股票分红数据
     # fetch_stock_dividend()
 
+    # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
+
     # 获取A股财务报表数据（资产负债表、利润表、现金流量表）
     fetch_a_financial_report(
+        provider="tushare",
         symbols=None,              # None表示使用所有A股股票
         fetch_all=True,            # 获取所有A股股票
         max_workers=10,            # 最大线程数
         delay=2,                   # 请求延迟时间（秒）
-        report_types=['balance_sheet', 'income_statement',
-                      'cash_flow_statement']  # 获取所有类型报表
+        report_types=['income_statement',
+                      'cash_flow_statement']  # 获取所有类型报表 'balance_sheet'
     )
 
     # 获取港股通财务报表数据（资产负债表、利润表、现金流量表）
-    fetch_hk_connector_financial_report(
-        symbols=None,              # None表示使用所有港股通股票
-        fetch_all=True,            # 获取所有港股通股票
-        max_workers=5,             # 最大线程数
-        delay=3,                   # 请求延迟时间（秒）
-        report_types=['balance_sheet', 'income_statement',
-                      'cash_flow_statement']  # 获取所有类型报表
-    )
+    # fetch_hk_connector_financial_report(
+    #     symbols=None,              # None表示使用所有港股通股票
+    #     fetch_all=True,            # 获取所有港股通股票
+    #     max_workers=5,             # 最大线程数
+    #     delay=3,                   # 请求延迟时间（秒）
+    #     report_types=['balance_sheet', 'income_statement',
+    #                   'cash_flow_statement']  # 获取所有类型报表
+    # )
 
 
 def dim_run():
@@ -547,15 +554,32 @@ def dim_run():
 
 
 def test_run():
-    # 测试获取港股通财务报表数据
-    fetch_hk_connector_financial_report(
-        symbols=None,              # None表示使用所有港股通股票
-        fetch_all=True,            # 获取所有港股通股票
-        max_workers=5,             # 最大线程数
-        delay=3,                   # 请求延迟时间（秒）
-        report_types=['balance_sheet', 'income_statement',
-                      'cash_flow_statement']  # 获取所有类型报表
-    )
+    import tushare as ts
+    pro = ts.pro_api(
+        '2876ea85cb005fb5fa17c809a98174f2d5aae8b1f830110a5ead6211')
+
+    # 使用 stock_utils.py 中的 get_full_symbol 方法将股票代码转换为 tushare API 要求的格式
+    stock_code = '600519'
+    full_symbol = get_full_symbol(
+        stock_code, type='suffix')  # 转换为后缀格式，如 '600519.SH'
+    df_a = pro.income(ts_code=full_symbol,
+                      start_date='20000101', end_date='20251231')
+    print(df_a)
+    df_b = pro.income(ts_code=full_symbol,
+                      start_date='20000101', end_date='20251231', report_type='6')
+    print(df_b)
+    # 添加报表类型标识列
+    df_a['report_type'] = '合并报表'
+    df_b['report_type'] = '母公司报表'
+
+    # 合并两个DataFrame
+    df_merged = pd.concat([df_a, df_b])
+
+    # 打印和保存合并后的结果
+    print(df_merged)
+    fs.save_to_csv(df_merged, 'income_tushare_merged')
+    fs.save_to_csv(df_a, 'df_a')
+    fs.save_to_csv(df_b, 'df_b')
 
 
 def main():
