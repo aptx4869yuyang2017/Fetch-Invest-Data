@@ -524,17 +524,18 @@ def quarterly_run():
     # 获取A股股票分红数据
     # fetch_stock_dividend()
 
-    # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
+    stock_list = ['000651', '600690', '000333',
+                  '601398', '601318', '600030']  # 格力 海尔 美的 工商 平安 中信证券
 
     # 获取A股财务报表数据（资产负债表、利润表、现金流量表）
     fetch_a_financial_report(
         provider="tushare",
-        symbols=None,              # None表示使用所有A股股票
+        symbols=stock_list,              # None表示使用所有A股股票
         fetch_all=True,            # 获取所有A股股票
         max_workers=20,            # 最大线程数
         delay=2,                   # 请求延迟时间（秒）
-        report_types=['income_statement',
-                      'cash_flow_statement', 'balance_sheet']  # 获取所有类型报表 'balance_sheet'
+        # 获取所有类型报表 ,'cash_flow_statement', 'balance_sheet'
+        report_types=['income_statement']
     )
 
     # 获取港股通财务报表数据（资产负债表、利润表、现金流量表）
@@ -566,11 +567,10 @@ def test_run():
     pro = ts.pro_api(tushare_token)
 
     # 使用 stock_utils.py 中的 get_full_symbol 方法将股票代码转换为 tushare API 要求的格式
-    stock_code = '600519'
-    full_symbol = get_full_symbol(
-        stock_code, type='suffix')  # 转换为后缀格式，如 '600519.SH'
-    df = pro.index_weight(index_code='399850.SZ',
-                          start_date='20180901', end_date='20250930')
+    stock_code = '000651.SZ'
+
+    df = pro.income(ts_code=stock_code,
+                    start_date='20180901', end_date='20250930', fields='ts_code,ann_date,net_after_nr_lp_correct')
 
     fs.save_to_csv(df, 'df')
 
@@ -590,9 +590,9 @@ def main():
         # fetch_stock_dividend()
 
         # monthly_run()
-        quarterly_run()
+        # quarterly_run()
         # dim_run()
-        # test_run()
+        test_run()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')
