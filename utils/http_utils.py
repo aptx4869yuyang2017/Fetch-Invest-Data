@@ -15,10 +15,16 @@ def retry_on_http_error(max_retries=3, delay=1):
 
     延迟策略：
     - 前三次重试：使用固定的参数时间
+<<<<<<< HEAD
     - 第4-5次重试：使用设定参数时间的3倍
     - 第6-8次重试：使用设定参数时间的5倍
     - 8次以上重试：使用设定参数时间的10倍
     - 12次以上重试：使用设定参数时间的20倍
+=======
+    - 第4-5次重试：使用设定参数时间的2倍
+    - 第6-8次重试：使用设定参数时间的3倍
+    - 8次以上重试：使用设定参数时间的5倍
+>>>>>>> origin/main
     """
     def decorator(func):
         @wraps(func)
@@ -39,6 +45,7 @@ def retry_on_http_error(max_retries=3, delay=1):
                     if retries <= 3:
                         current_delay = delay
                     elif 4 <= retries <= 5:
+<<<<<<< HEAD
                         current_delay = delay * 3
                     elif 6 <= retries <= 8:
                         current_delay = delay * 5
@@ -46,6 +53,13 @@ def retry_on_http_error(max_retries=3, delay=1):
                         current_delay = delay * 10
                     else:
                         current_delay = delay * 20
+=======
+                        current_delay = delay * 2
+                    elif 6 <= retries <= 8:
+                        current_delay = delay * 3
+                    else:
+                        current_delay = delay * 5
+>>>>>>> origin/main
 
                     time.sleep(current_delay)
             return func(*args, **kwargs)
