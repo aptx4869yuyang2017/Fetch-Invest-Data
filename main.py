@@ -141,6 +141,13 @@ def fetch_a_financial_report(symbols=None, fetch_all=True, max_workers=10, delay
         else:
             logger.warning('symbols为None且fetch_all为False，无法获取A股股票代码')
             return
+    elif isinstance(symbols, (int, float)):
+        # 如果symbols是数值，获取指定数量的股票代码
+        num_symbols = int(symbols)
+        logger.info(f'获取前 {num_symbols} 个A股股票代码...')
+        all_stocks = a_fin_report_fetcher.get_all_stock_codes()
+        stock_list = all_stocks[:num_symbols]
+        logger.info(f'成功获取 {len(stock_list)} 个A股股票代码')
     else:
         stock_list = symbols
         logger.info(f'使用指定的 {len(stock_list)} 个A股股票代码')
@@ -525,14 +532,14 @@ def quarterly_run():
     # fetch_stock_dividend()
 
     stock_list = ['000651', '600690', '000333',
-                  '601398', '601318', '600030']  # 格力 海尔 美的 工商 平安 中信证券
+                  '601398', '601318', '600030', '000568']  # 格力 海尔 美的 工商 平安 中信证券
 
     # 获取A股财务报表数据（资产负债表、利润表、现金流量表）
     fetch_a_financial_report(
         provider="tushare",
-        symbols=stock_list,              # None表示使用所有A股股票
+        symbols=None,               # None表示使用所有A股股票
         fetch_all=True,            # 获取所有A股股票
-        max_workers=20,            # 最大线程数
+        max_workers=12,            # 最大线程数
         delay=2,                   # 请求延迟时间（秒）
         # 获取所有类型报表 ,'cash_flow_statement', 'balance_sheet'
         report_types=['income_statement']
@@ -590,9 +597,9 @@ def main():
         # fetch_stock_dividend()
 
         # monthly_run()
-        # quarterly_run()
+        quarterly_run()
         # dim_run()
-        test_run()
+        # test_run()
 
     except Exception as e:
         logger.error(f'程序运行出错: {str(e)}')

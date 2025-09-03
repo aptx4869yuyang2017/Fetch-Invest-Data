@@ -178,12 +178,18 @@ class AFinancialReportFetcher:
 
         # 如果需要合并结果
         if merge_results:
-            merged_df = pd.DataFrame()
+            # 先收集所有非空的DataFrame到列表中，然后一次性合并
+            dfs_to_merge = []
             for symbol, df in results.items():
                 if not df.empty:
                     # 添加股票代码列
-                    df = df.copy()
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    df_copy = df.copy()
+                    df_copy['symbol'] = symbol  # 确保添加股票代码列
+                    dfs_to_merge.append(df_copy)
+
+            # 一次性合并所有DataFrame
+            merged_df = pd.concat(
+                dfs_to_merge, ignore_index=True) if dfs_to_merge else pd.DataFrame()
 
             self.logger.info(f"已将 {success_count} 只股票的现金流量表数据合并为一个DataFrame")
             return merged_df
@@ -237,12 +243,18 @@ class AFinancialReportFetcher:
 
         # 如果需要合并结果
         if merge_results:
-            merged_df = pd.DataFrame()
+            # 先收集所有非空的DataFrame到列表中，然后一次性合并
+            dfs_to_merge = []
             for symbol, df in results.items():
                 if not df.empty:
                     # 添加股票代码列
-                    df = df.copy()
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    df_copy = df.copy()
+                    df_copy['symbol'] = symbol  # 确保添加股票代码列
+                    dfs_to_merge.append(df_copy)
+
+            # 一次性合并所有DataFrame
+            merged_df = pd.concat(
+                dfs_to_merge, ignore_index=True) if dfs_to_merge else pd.DataFrame()
 
             self.logger.info(f"已将 {success_count} 只股票的资产负债表数据合并为一个DataFrame")
             return merged_df
@@ -296,12 +308,18 @@ class AFinancialReportFetcher:
 
         # 如果需要合并结果
         if merge_results:
-            merged_df = pd.DataFrame()
+            # 先收集所有非空的DataFrame到列表中，然后一次性合并
+            dfs_to_merge = []
             for symbol, df in results.items():
                 if not df.empty:
                     # 添加股票代码列
-                    df = df.copy()
-                    merged_df = pd.concat([merged_df, df], ignore_index=True)
+                    df_copy = df.copy()
+                    df_copy['symbol'] = symbol  # 确保添加股票代码列
+                    dfs_to_merge.append(df_copy)
+
+            # 一次性合并所有DataFrame
+            merged_df = pd.concat(
+                dfs_to_merge, ignore_index=True) if dfs_to_merge else pd.DataFrame()
 
             self.logger.info(f"已将 {success_count} 只股票的利润表数据合并为一个DataFrame")
             return merged_df
