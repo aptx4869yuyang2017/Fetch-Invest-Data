@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 
-def split_financial_report(file_name):
+def split_financial_report(file_name, output_file_name):
     # 读取合并后的利润表
     fs = FileStorage()
     df = fs.load_from_parquet(file_name)
@@ -20,12 +20,14 @@ def split_financial_report(file_name):
         # 删除全空列
         type_df = type_df.dropna(axis=1, how='all')
 
-        fs.save_to_parquet(type_df, f'income_statement_type_{comp_type}')
-        fs.save_to_csv(type_df, f'income_statement_type_{comp_type}')
+        fs.save_to_parquet(type_df, f'{output_file_name}_type_{comp_type}')
+        fs.save_to_csv(type_df.head(5000),
+                       f'{output_file_name}_type_{comp_type}')
         print(f'Saved {comp_type} type with {len(type_df)} rows')
 
 
 if __name__ == '__main__':
     split_financial_report(
-        file_name='a_income_statement'
+        file_name='a_income_statement',
+        output_file_name='a_income_statement'
     )
