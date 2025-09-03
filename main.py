@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import logging
 import pandas as pd
 import configparser
@@ -531,31 +532,20 @@ def quarterly_run():
     # 获取A股股票分红数据
     # fetch_stock_dividend()
 
-<<<<<<< HEAD
     stock_list = ['000651', '600690', '000333',
                   '601398', '601318', '600030', '000568']  # 格力 海尔 美的 工商 平安 中信证券
-=======
-    # stock_list = ['000651', '600690', '000333']  # 格力 海尔 美的
->>>>>>> origin/main
 
     # 获取A股财务报表数据（资产负债表、利润表、现金流量表）
     fetch_a_financial_report(
         provider="tushare",
-<<<<<<< HEAD
-        symbols=None,               # None表示使用所有A股股票
-=======
-        symbols=None,              # None表示使用所有A股股票
->>>>>>> origin/main
+
+        symbols=100,               # None表示使用所有A股股票
         fetch_all=True,            # 获取所有A股股票
         max_workers=12,            # 最大线程数
         delay=2,                   # 请求延迟时间（秒）
-<<<<<<< HEAD
         # 获取所有类型报表 ,'cash_flow_statement', 'balance_sheet'
         report_types=['income_statement']
-=======
-        report_types=['income_statement',
-                      'cash_flow_statement']  # 获取所有类型报表 'balance_sheet'
->>>>>>> origin/main
+
     )
 
     # 获取港股通财务报表数据（资产负债表、利润表、现金流量表）
@@ -574,53 +564,6 @@ def dim_run():
     # fetch_sw_index_data(get_data=True)
     # fetch_stock_share_info()
     # fetch_stock_info()
-
-
-def test_run():
-    import tushare as ts
-<<<<<<< HEAD
-    import os
-    load_dotenv()
-    # 从环境变量获取Tushare API Token
-    tushare_token = os.environ.get('TUSHARE_TOKEN')
-
-    # 初始化Tushare API
-    pro = ts.pro_api(tushare_token)
-
-    # 使用 stock_utils.py 中的 get_full_symbol 方法将股票代码转换为 tushare API 要求的格式
-    stock_code = '000651.SZ'
-
-    df = pro.income(ts_code=stock_code,
-                    start_date='20180901', end_date='20250930', fields='ts_code,ann_date,net_after_nr_lp_correct')
-
-    fs.save_to_csv(df, 'df')
-=======
-    pro = ts.pro_api(
-        '2876ea85cb005fb5fa17c809a98174f2d5aae8b1f830110a5ead6211')
-
-    # 使用 stock_utils.py 中的 get_full_symbol 方法将股票代码转换为 tushare API 要求的格式
-    stock_code = '600519'
-    full_symbol = get_full_symbol(
-        stock_code, type='suffix')  # 转换为后缀格式，如 '600519.SH'
-    df_a = pro.income(ts_code=full_symbol,
-                      start_date='20000101', end_date='20251231')
-    print(df_a)
-    df_b = pro.income(ts_code=full_symbol,
-                      start_date='20000101', end_date='20251231', report_type='6')
-    print(df_b)
-    # 添加报表类型标识列
-    df_a['report_type'] = '合并报表'
-    df_b['report_type'] = '母公司报表'
-
-    # 合并两个DataFrame
-    df_merged = pd.concat([df_a, df_b])
-
-    # 打印和保存合并后的结果
-    print(df_merged)
-    fs.save_to_csv(df_merged, 'income_tushare_merged')
-    fs.save_to_csv(df_a, 'df_a')
-    fs.save_to_csv(df_b, 'df_b')
->>>>>>> origin/main
 
 
 def main():

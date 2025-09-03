@@ -13,10 +13,8 @@ from dotenv import load_dotenv
 from fetcher.base_financial_report_provider import FinancialReportProvider
 from utils.stock_utils import get_full_symbol
 from utils.http_utils import retry_on_http_error
-<<<<<<< HEAD
+
 from utils.df_utils import safe_concat
-=======
->>>>>>> origin/main
 
 
 class AFinancialReportProviderTushare(FinancialReportProvider):
@@ -35,7 +33,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
         # 初始化Tushare API
         self.pro = ts.pro_api(tushare_token)
 
-<<<<<<< HEAD
     @retry_on_http_error(max_retries=20, delay=2)
     def _fetch_balance_sheet_data(self, full_symbol, start_date, end_date):
         """内部方法，用于获取资产负债表数据并支持重试"""
@@ -51,22 +48,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
                                                   end_date=end_date,
                                                   report_type='6')
 
-=======
-    @retry_on_http_error(max_retries=10, delay=2)
-    def _fetch_balance_sheet_data(self, full_symbol, start_date, end_date):
-        """内部方法，用于获取资产负债表数据并支持重试"""
-        # 获取合并报表数据（report_type='0'）
-        df_consolidated = self.pro.balancesheet(ts_code=full_symbol,
-                                                start_date=start_date,
-                                                end_date=end_date,
-                                                report_type='0')
-
-        # 获取母公司报表数据（report_type='1'）
-        df_parent_company = self.pro.balancesheet(ts_code=full_symbol,
-                                                  start_date=start_date,
-                                                  end_date=end_date,
-                                                  report_type='1')
->>>>>>> origin/main
         return df_consolidated, df_parent_company
 
     def get_balance_sheet(self, symbol: str) -> pd.DataFrame:
@@ -88,33 +69,19 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
             full_symbol = get_full_symbol(symbol, type='suffix')
 
             # 调用带重试机制的内部方法获取数据
-<<<<<<< HEAD
+
             df_consolidated,  df_parent_company = self._fetch_balance_sheet_data(
-=======
-            df_consolidated, df_parent_company = self._fetch_balance_sheet_data(
->>>>>>> origin/main
+
                 full_symbol, start_date, end_date)
 
             # 添加报表类型标识列
             df_consolidated['report_type'] = '合并报表'
             df_parent_company['report_type'] = '母公司报表'
 
-<<<<<<< HEAD
             # 合并所有DataFrame前检查是否为空，避免未来版本的pandas警告
             all_dfs = [df_consolidated, df_parent_company]
 
             df_merged = safe_concat(all_dfs)
-=======
-            # 合并两个DataFrame前检查是否为空，避免未来版本的pandas警告
-            if df_consolidated.empty and df_parent_company.empty:
-                return pd.DataFrame()
-            elif df_consolidated.empty:
-                df_merged = df_parent_company
-            elif df_parent_company.empty:
-                df_merged = df_consolidated
-            else:
-                df_merged = pd.concat([df_consolidated, df_parent_company])
->>>>>>> origin/main
 
             # 处理日期列
             if 'ann_date' in df_merged.columns:
@@ -151,7 +118,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
             # 返回空DataFrame
             return pd.DataFrame()
 
-<<<<<<< HEAD
     @retry_on_http_error(max_retries=20, delay=2)
     def _fetch_income_statement_data(self, full_symbol, start_date, end_date):
         """内部方法，用于获取利润表数据并支持重试"""
@@ -184,23 +150,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
                                                       fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,end_type,basic_eps,diluted_eps,total_revenue,revenue,int_income,prem_earned,comm_income,n_commis_income,n_oth_income,n_oth_b_income,prem_income,out_prem,une_prem_reser,reins_income,n_sec_tb_income,n_sec_uw_income,n_asset_mg_income,oth_b_income,fv_value_chg_gain,invest_income,ass_invest_income,forex_gain,total_cogs,oper_cost,int_exp,comm_exp,biz_tax_surchg,sell_exp,admin_exp,fin_exp,assets_impair_loss,prem_refund,compens_payout,reser_insur_liab,div_payt,reins_exp,oper_exp,compens_payout_refu,insur_reser_refu,reins_cost_refund,other_bus_cost,operate_profit,non_oper_income,non_oper_exp,nca_disploss,total_profit,income_tax,n_income,n_income_attr_p,minority_gain,oth_compr_income,t_compr_income,compr_inc_attr_p,compr_inc_attr_m_s,ebit,ebitda,insurance_exp,undist_profit,distable_profit,rd_exp,fin_exp_int_exp,fin_exp_int_inc,transfer_surplus_rese,transfer_housing_imprest,transfer_oth,adj_lossgain,withdra_legal_surplus,withdra_legal_pubfund,withdra_biz_devfund,withdra_rese_fund,withdra_oth_ersu,workers_welfare,distr_profit_shrhder,prfshare_payable_dvd,comshare_payable_dvd,capit_comstock_div,net_after_nr_lp_correct,credit_impa_loss,net_expo_hedging_benefits,oth_impair_loss_assets,total_opcost,amodcost_fin_assets,oth_income,asset_disp_income,continued_net_profit,end_net_profit,update_flag')
 
         return df_consolidated, df_quarterly_consolidated, df_parent_company, df_quarterly_parent_company
-=======
-    @retry_on_http_error(max_retries=10, delay=2)
-    def _fetch_income_statement_data(self, full_symbol, start_date, end_date):
-        """内部方法，用于获取利润表数据并支持重试"""
-        # 获取合并报表数据（report_type='0'）
-        df_consolidated = self.pro.income(ts_code=full_symbol,
-                                          start_date=start_date,
-                                          end_date=end_date,
-                                          report_type='0')
-
-        # 获取母公司报表数据（report_type='1'）
-        df_parent_company = self.pro.income(ts_code=full_symbol,
-                                            start_date=start_date,
-                                            end_date=end_date,
-                                            report_type='1')
-        return df_consolidated, df_parent_company
->>>>>>> origin/main
 
     def get_income_statement(self, symbol: str) -> pd.DataFrame:
         """获取利润表数据
@@ -221,16 +170,12 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
             full_symbol = get_full_symbol(symbol, type='suffix')
 
             # 调用带重试机制的内部方法获取数据
-<<<<<<< HEAD
+
             df_consolidated, df_quarterly_consolidated, df_parent_company, df_quarterly_parent_company = self._fetch_income_statement_data(
-=======
-            df_consolidated, df_parent_company = self._fetch_income_statement_data(
->>>>>>> origin/main
                 full_symbol, start_date, end_date)
 
             # 添加报表类型标识列
             df_consolidated['report_type'] = '合并报表'
-<<<<<<< HEAD
             df_quarterly_consolidated['report_type'] = '单季合并'
             df_parent_company['report_type'] = '母公司报表'
             df_quarterly_parent_company['report_type'] = '母公司单季表'
@@ -240,19 +185,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
                        df_parent_company, df_quarterly_parent_company]
 
             df_merged = safe_concat(all_dfs)
-=======
-            df_parent_company['report_type'] = '母公司报表'
-
-            # 合并两个DataFrame前检查是否为空，避免未来版本的pandas警告
-            if df_consolidated.empty and df_parent_company.empty:
-                return pd.DataFrame()
-            elif df_consolidated.empty:
-                df_merged = df_parent_company
-            elif df_parent_company.empty:
-                df_merged = df_consolidated
-            else:
-                df_merged = pd.concat([df_consolidated, df_parent_company])
->>>>>>> origin/main
 
             # 处理日期列
             if 'ann_date' in df_merged.columns:
@@ -289,7 +221,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
             # 返回空DataFrame
             return pd.DataFrame()
 
-<<<<<<< HEAD
     @retry_on_http_error(max_retries=20, delay=2)
     def _fetch_cash_flow_statement_data(self, full_symbol, start_date, end_date):
         """内部方法，用于获取现金流量表数据并支持重试"""
@@ -318,23 +249,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
                                                         report_type='7')
 
         return df_consolidated, df_quarterly_consolidated, df_parent_company, df_quarterly_parent_company
-=======
-    @retry_on_http_error(max_retries=10, delay=2)
-    def _fetch_cash_flow_statement_data(self, full_symbol, start_date, end_date):
-        """内部方法，用于获取现金流量表数据并支持重试"""
-        # 获取合并报表数据（report_type='0'）
-        df_consolidated = self.pro.cashflow(ts_code=full_symbol,
-                                            start_date=start_date,
-                                            end_date=end_date,
-                                            report_type='0')
-
-        # 获取母公司报表数据（report_type='1'）
-        df_parent_company = self.pro.cashflow(ts_code=full_symbol,
-                                              start_date=start_date,
-                                              end_date=end_date,
-                                              report_type='1')
-        return df_consolidated, df_parent_company
->>>>>>> origin/main
 
     def get_cash_flow_statement(self, symbol: str) -> pd.DataFrame:
         """获取现金流量表数据
@@ -355,16 +269,13 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
             full_symbol = get_full_symbol(symbol, type='suffix')
 
             # 调用带重试机制的内部方法获取数据
-<<<<<<< HEAD
+
             df_consolidated, df_quarterly_consolidated, df_parent_company, df_quarterly_parent_company = self._fetch_cash_flow_statement_data(
-=======
-            df_consolidated, df_parent_company = self._fetch_cash_flow_statement_data(
->>>>>>> origin/main
                 full_symbol, start_date, end_date)
 
             # 添加报表类型标识列
             df_consolidated['report_type'] = '合并报表'
-<<<<<<< HEAD
+
             df_quarterly_consolidated['report_type'] = '单季合并'
             df_parent_company['report_type'] = '母公司报表'
             df_quarterly_parent_company['report_type'] = '母公司单季表'
@@ -374,19 +285,6 @@ class AFinancialReportProviderTushare(FinancialReportProvider):
                        df_parent_company, df_quarterly_parent_company]
 
             df_merged = safe_concat(all_dfs)
-=======
-            df_parent_company['report_type'] = '母公司报表'
-
-            # 合并两个DataFrame前检查是否为空，避免未来版本的pandas警告
-            if df_consolidated.empty and df_parent_company.empty:
-                return pd.DataFrame()
-            elif df_consolidated.empty:
-                df_merged = df_parent_company
-            elif df_parent_company.empty:
-                df_merged = df_consolidated
-            else:
-                df_merged = pd.concat([df_consolidated, df_parent_company])
->>>>>>> origin/main
 
             # 处理日期列
             if 'ann_date' in df_merged.columns:
